@@ -24,7 +24,7 @@ export function HomeHero() {
         </FadeIn>
         <FadeIn delay={0.1}>
           <h1 className="bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text font-serif text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
-            <TermTooltip termKey="사주팔자">사주팔자</TermTooltip> 분석기
+            <TermTooltip termKey="사주팔자">사주팔자</TermTooltip>
           </h1>
         </FadeIn>
         <FadeIn delay={0.2}>

@@ -60,7 +60,7 @@ export function ScoreGauge({ score, size = 64, strokeWidth = 5, label }: ScoreGa
         <span className="text-lg font-bold leading-none" style={{ color: getScoreColor(score) }}>
           {score}
         </span>
-        {label && <span className="text-[9px] text-muted-foreground">{label}</span>}
+        {label && <span className="text-xs text-muted-foreground">{label}</span>}
       </div>
     </div>
   );

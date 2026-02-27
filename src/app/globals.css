@@ -120,6 +120,9 @@
 }
 
 @layer base {
+  html {
+    font-size: 106.25%; /* 16px → 17px: 한글 가독성 개선 */
+  }
   * {
     @apply border-border outline-ring/50;
   }

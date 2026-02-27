@@ -22,7 +22,7 @@ const notoSerifKR = Noto_Serif_KR({
 });
 
 export const metadata: Metadata = {
-  title: "사주팔자 분석기 - 四柱八字",
+  title: "사주팔자 - 四柱八字",
   description: "생년월일시로 사주팔자, 오행분석, 용신, 대운, 궁합까지 종합 분석합니다.",
   keywords: ["사주", "팔자", "사주팔자", "오행", "용신", "대운", "궁합", "만세력"],
 };

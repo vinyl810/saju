@@ -41,15 +41,22 @@ export function TermTooltip({ termKey, termDef, children, iconSize = 12 }: TermT
           align="center"
           collisionPadding={8}
         >
-          <div className="space-y-1.5">
-            <div className="font-bold text-sm">
-              {def.term}
-              {def.hanja && <span className="ml-1 font-normal text-muted-foreground">{def.hanja}</span>}
+          <div className="space-y-2">
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-semibold text-sm">{def.term}</span>
+              {def.hanja && (
+                <span className="text-xs text-muted-foreground/60">{def.hanja}</span>
+              )}
             </div>
-            <p className="text-sm">{def.short}</p>
-            {def.detail && (
-              <p className="text-xs text-muted-foreground">{def.detail}</p>
+            {def.easy && (
+              <p className="text-[13px] leading-relaxed text-foreground/85">{def.easy}</p>
             )}
+            <div className="border-t border-border/50 pt-1.5 space-y-0.5">
+              <p className="text-xs text-muted-foreground">{def.short}</p>
+              {def.detail && (
+                <p className="text-xs leading-relaxed text-muted-foreground/60">{def.detail}</p>
+              )}
+            </div>
           </div>
           <PopoverPrimitive.Arrow className="fill-popover" />
         </PopoverPrimitive.Content>

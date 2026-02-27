@@ -65,7 +65,7 @@ export function PillarCard({ pillar, label, isDayMaster = false }: PillarCardPro
       {/* Cheongan ten god */}
       <div className="px-2 py-1 text-xs text-muted-foreground">
         {cheonganTenGod ? (
-          <><span className="text-[10px] opacity-60">나와의 관계</span>{' '}<TermTooltip termKey={cheonganTenGod}>{cheonganTenGod} {TEN_GOD_HANJA[cheonganTenGod]}</TermTooltip></>
+          <><span className="text-xs opacity-60">나와의 관계</span>{' '}<TermTooltip termKey={cheonganTenGod}>{cheonganTenGod} {TEN_GOD_HANJA[cheonganTenGod]}</TermTooltip></>
         ) : (
           <TermTooltip termKey="일간">일간 (나 자신)</TermTooltip>
         )}
@@ -73,26 +73,26 @@ export function PillarCard({ pillar, label, isDayMaster = false }: PillarCardPro
 
       {/* Cheongan */}
       <div className={`mx-2 rounded-lg border-2 p-2.5 sm:p-3 ${ELEMENT_BG[cheonganElement]} ${ELEMENT_BORDER[cheonganElement]}`}>
-        <div className="mb-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground/70">
-          <TermTooltip termKey="천간" iconSize={9}>천간</TermTooltip> · 하늘
+        <div className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+          <TermTooltip termKey="천간" iconSize={10}>천간</TermTooltip> · 하늘
         </div>
         <div className={`font-serif text-xl font-bold sm:text-2xl ${ELEMENT_TEXT[cheonganElement]}`}>
           {ganJi.cheongan}
         </div>
-        <div className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">
+        <div className="mt-0.5 text-xs text-muted-foreground">
           {CHEONGAN_HANJA[ganJi.cheongan]} · {cheonganElement}{ELEMENT_HANJA[cheonganElement]} · {cheonganYinYang}
         </div>
       </div>
 
       {/* Jiji */}
       <div className={`mx-2 mt-1.5 mb-1.5 rounded-lg border-2 p-2.5 sm:p-3 ${ELEMENT_BG[jijiElement]} ${ELEMENT_BORDER[jijiElement]}`}>
-        <div className="mb-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground/70">
-          <TermTooltip termKey="지지" iconSize={9}>지지</TermTooltip> · 땅
+        <div className="mb-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/70">
+          <TermTooltip termKey="지지" iconSize={10}>지지</TermTooltip> · 땅
         </div>
         <div className={`font-serif text-xl font-bold sm:text-2xl ${ELEMENT_TEXT[jijiElement]}`}>
           {ganJi.jiji}
         </div>
-        <div className="mt-0.5 text-[10px] text-muted-foreground sm:text-xs">
+        <div className="mt-0.5 text-xs text-muted-foreground">
           {JIJI_HANJA[ganJi.jiji]} · {jijiElement}{ELEMENT_HANJA[jijiElement]} · {JIJI_ANIMAL[ganJi.jiji]}
         </div>
       </div>
@@ -100,7 +100,7 @@ export function PillarCard({ pillar, label, isDayMaster = false }: PillarCardPro
       {/* Jiji ten god */}
       <div className="px-2 pb-2 text-xs text-muted-foreground">
         {jijiTenGod && (
-          <><span className="text-[10px] opacity-60">나와의 관계</span>{' '}<TermTooltip termKey={jijiTenGod}>{jijiTenGod} {TEN_GOD_HANJA[jijiTenGod]}</TermTooltip></>
+          <><span className="text-xs opacity-60">나와의 관계</span>{' '}<TermTooltip termKey={jijiTenGod}>{jijiTenGod} {TEN_GOD_HANJA[jijiTenGod]}</TermTooltip></>
         )}
       </div>
     </Card>

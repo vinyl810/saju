@@ -53,20 +53,20 @@ export function MajorFortuneTimeline({ fortunes, birthYear }: MajorFortuneTimeli
                       ? 'border-primary bg-primary/5 shadow-md shadow-primary/10 ring-2 ring-primary/50'
                       : 'hover:bg-muted/50 hover:shadow-sm'
                   }`}
-                  style={{ width: '110px' }}
+                  style={{ width: '116px' }}
                 >
                   {isCurrent && (
-                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-primary">
                       현재
                     </div>
                   )}
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     {fortune.startAge}~{fortune.endAge}세
                   </div>
                   <div className="mt-1 font-serif text-lg font-bold">
                     {fortune.ganJi.cheongan}{fortune.ganJi.jiji}
                   </div>
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-xs text-muted-foreground">
                     {CHEONGAN_HANJA[fortune.ganJi.cheongan]}{JIJI_HANJA[fortune.ganJi.jiji]}
                   </div>
 
@@ -80,10 +80,10 @@ export function MajorFortuneTimeline({ fortunes, birthYear }: MajorFortuneTimeli
 
                   <div className="mt-1 flex items-center justify-center gap-0.5">
                     <div className={`h-1.5 w-1.5 rounded-full ${getScoreColor(fortune.score)}`} />
-                    <span className="text-[10px] font-medium">{getScoreLabel(fortune.score)}</span>
+                    <span className="text-xs font-medium">{getScoreLabel(fortune.score)}</span>
                   </div>
-                  <div className="mt-0.5 text-[9px] text-muted-foreground">
-                    <TermTooltip termKey={fortune.cheonganTenGod} iconSize={9}>{fortune.cheonganTenGod}</TermTooltip>/<TermTooltip termKey={fortune.jijiTenGod} iconSize={9}>{fortune.jijiTenGod}</TermTooltip>
+                  <div className="mt-0.5 text-[11px] text-muted-foreground">
+                    <TermTooltip termKey={fortune.cheonganTenGod} iconSize={10}>{fortune.cheonganTenGod}</TermTooltip>/<TermTooltip termKey={fortune.jijiTenGod} iconSize={10}>{fortune.jijiTenGod}</TermTooltip>
                   </div>
                 </div>
               );
