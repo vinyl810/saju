@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     const result = performCompatibilityAnalysis(parsed.data);
     logger.info(MOD, `궁합 분석 완료`, { totalScore: result.result.totalScore, grade: result.result.grade });
 
-    logCompatSearch(parsed.data.person1, parsed.data.person2).catch(() => {});
+    await logCompatSearch(parsed.data.person1, parsed.data.person2);
 
     return NextResponse.json(result);
   } catch (error) {

@@ -40,7 +40,7 @@ export async function POST(request: Request) {
     const result = performSajuAnalysis(parsed.data);
     logger.info(MOD, `사주 분석 완료, 응답 전송`);
 
-    logSajuSearch(parsed.data).catch(() => {});
+    await logSajuSearch(parsed.data);
 
     return NextResponse.json(result);
   } catch (error) {
