@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { performSajuAnalysis } from '@/lib/saju';
 import { logger } from '@/lib/logger';
+import { logSajuSearch } from '@/lib/db/search-log';
 
 const MOD = 'api-saju';
 
@@ -38,6 +39,8 @@ export async function POST(request: Request) {
     logger.info(MOD, `입력값 검증 통과, 사주 분석 시작`);
     const result = performSajuAnalysis(parsed.data);
     logger.info(MOD, `사주 분석 완료, 응답 전송`);
+
+    logSajuSearch(parsed.data).catch(() => {});
 
     return NextResponse.json(result);
   } catch (error) {

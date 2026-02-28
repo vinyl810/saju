@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { performCompatibilityAnalysis } from '@/lib/saju';
 import { logger } from '@/lib/logger';
+import { logCompatSearch } from '@/lib/db/search-log';
 
 const MOD = 'api-compatibility';
 
@@ -43,6 +44,8 @@ export async function POST(request: Request) {
     logger.info(MOD, `입력값 검증 통과, 궁합 분석 시작`);
     const result = performCompatibilityAnalysis(parsed.data);
     logger.info(MOD, `궁합 분석 완료`, { totalScore: result.result.totalScore, grade: result.result.grade });
+
+    logCompatSearch(parsed.data.person1, parsed.data.person2).catch(() => {});
 
     return NextResponse.json(result);
   } catch (error) {
