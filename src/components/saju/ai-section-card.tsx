@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Sparkles, User, Coins, Briefcase, Heart, Gem, Activity, Calendar } from 'lucide-react';
+import { Sparkles, User, Coins, Briefcase, Heart, Gem, Activity, Calendar, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FadeIn } from '@/components/ui/motion';
@@ -33,6 +33,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Gem,
   Activity,
   Calendar,
+  MessageCircle,
 };
 
 // ===== 데모그래픽 헤더 렌더링 =====

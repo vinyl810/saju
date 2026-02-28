@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Sparkles, User, Coins, Briefcase, Heart, Calendar } from 'lucide-react';
+import { Sparkles, User, Coins, Briefcase, Heart, Calendar, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FadeIn } from '@/components/ui/motion';
 import type { AICompatSectionKey, SectionState } from '@/lib/ai/types';
@@ -15,6 +15,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Briefcase,
   Heart,
   Calendar,
+  MessageCircle,
 };
 
 interface AICompatSectionCardProps {

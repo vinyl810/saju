@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { FadeIn } from '@/components/ui/motion';
 import { useAiCompatibility } from '@/hooks/use-ai-compatibility';
 import { AICompatSectionCard } from './ai-compat-section-card';
+import { SatisfactionSurvey } from '@/components/ui/satisfaction-survey';
 import { AI_COMPAT_SECTIONS, type SectionState } from '@/lib/ai/types';
 import type { SajuAnalysis, CompatibilityResult } from '@/lib/saju/types';
 
@@ -112,6 +113,28 @@ export function AiCompatibility({ person1Analysis, person2Analysis, compatResult
       {/* Streaming / Done / Error states */}
       {(status === 'streaming' || status === 'done' || status === 'error') && (
         <div className="space-y-4">
+          {/* 오늘을 위한 한마디 배너 */}
+          {sections.todayMessage.status !== 'idle' && (
+            <FadeIn>
+              <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 shadow-sm shadow-primary/5">
+                <div className="absolute top-3 left-4 font-serif text-4xl leading-none text-primary/15 select-none" aria-hidden="true">&ldquo;</div>
+                <CardContent className="relative px-10 py-6 text-center">
+                  <p className="font-serif text-base leading-relaxed sm:text-lg">
+                    {sections.todayMessage.content}
+                    {sections.todayMessage.status === 'streaming' && (
+                      <span className="inline-block w-0.5 h-4 ml-0.5 align-text-bottom animate-pulse bg-primary" />
+                    )}
+                  </p>
+                  <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                    <span className="h-px w-6 bg-primary/20" />
+                    오늘을 위한 한마디
+                    <span className="h-px w-6 bg-primary/20" />
+                  </div>
+                </CardContent>
+              </Card>
+            </FadeIn>
+          )}
+
           {/* Error banner */}
           {status === 'error' && error && (
             <FadeIn>
@@ -157,12 +180,15 @@ export function AiCompatibility({ person1Analysis, person2Analysis, compatResult
 
           {/* Completion indicator */}
           {status === 'done' && (
-            <FadeIn>
-              <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                AI 궁합 분석 완료
-              </div>
-            </FadeIn>
+            <>
+              <FadeIn>
+                <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  AI 궁합 분석 완료
+                </div>
+              </FadeIn>
+              <SatisfactionSurvey type="compatibility" />
+            </>
           )}
         </div>
       )}

@@ -3,7 +3,7 @@ import type { CompressedSajuData } from './types';
 import { analyzeSpouseStar, formatSpousePalace, formatTimingWindow } from '@/lib/saju/spouse-star';
 
 export function compressSajuData(analysis: SajuAnalysis): CompressedSajuData {
-  const { fourPillars, fiveElements, yongsin, currentYearFortune, relationships, birthInput, majorFortunes } = analysis;
+  const { fourPillars, fiveElements, yongsin, currentYearFortune, todayFortune, relationships, birthInput, majorFortunes } = analysis;
 
   const pillarStr = (p: typeof fourPillars.year) =>
     `${p.ganJi.cheongan}${p.ganJi.jiji}`;
@@ -37,6 +37,13 @@ export function compressSajuData(analysis: SajuAnalysis): CompressedSajuData {
       천간십신: currentYearFortune.cheonganTenGod,
       지지십신: currentYearFortune.jijiTenGod,
     },
+    오늘운: {
+      날짜: todayFortune.date,
+      간지: `${todayFortune.ganJi.cheongan}${todayFortune.ganJi.jiji}`,
+      점수: todayFortune.score,
+      천간십신: todayFortune.cheonganTenGod,
+      지지십신: todayFortune.jijiTenGod,
+    },
     관계: relationships.map((r) => r.name),
     대운: majorFortunes.map((f) => ({
       간지: `${f.ganJi.cheongan}${f.ganJi.jiji}`,
@@ -65,7 +72,7 @@ export function buildSystemPrompt(): string {
 - 반드시 한국어로 작성하세요.
 - 각 섹션은 반드시 "---SECTION:key---" 마커로 시작하세요.
 - 마커 뒤에 바로 내용을 작성하세요.
-- 8개 섹션을 순서대로 모두 작성하세요: overall, personality, wealth, career, love, marriage, health, yearAdvice
+- 9개 섹션을 순서대로 모두 작성하세요: todayMessage, overall, personality, wealth, career, love, marriage, health, yearAdvice
 - 각 섹션은 2-4문단으로 작성하세요.
 - 전문 용어는 한글(한자) 형식으로 한자를 병기하세요 (예: 용신(用神)).
 - 오행은 어떤 맥락에서든 반드시 한글(한자) 형태로 쓰세요: 목(木), 화(火), 토(土), 금(金), 수(水). 절대 木(목)처럼 한자를 앞에 쓰지 마세요.
@@ -97,11 +104,14 @@ export function buildUserPrompt(data: CompressedSajuData): string {
       ? data.결혼분석.결혼적기[0]
       : '해당 없음';
 
-  return `다음 사주 데이터를 분석하여 8개 섹션으로 해석해 주세요.
+  return `다음 사주 데이터를 분석하여 9개 섹션으로 해석해 주세요.
 
 ${JSON.stringify(data, null, 2)}
 
 각 섹션은 다음 마커로 시작해 주세요:
+
+---SECTION:todayMessage---
+오늘을 위한 한마디: 오늘(${data.오늘운.날짜})은 ${data.오늘운.간지}일이고, 이 사주(일간: ${data.일간}, 용신: ${data.용신})에게 오늘의 십신은 ${data.오늘운.천간십신}/${data.오늘운.지지십신}입니다. 이 정보를 바탕으로 오늘 하루에 대한 구체적이고 실행 가능한 조언을 1-2문장으로 작성하세요. 예시처럼 구체적으로: "오늘은 새로운 사람과의 만남에 좋은 기운이 있으니, 모임이나 약속을 적극적으로 잡아보세요." {{용어}} 마크업, **볼드**, 한자 병기를 사용하지 마세요. 일반인이 바로 이해할 수 있는 쉬운 문장으로 쓰세요.
 
 ---SECTION:overall---
 종합운: 이 사주의 전체적인 특징과 삶의 큰 흐름을 해석해 주세요.
@@ -152,7 +162,7 @@ interface CompressedCompatData {
 }
 
 function compressSajuDataSimple(analysis: SajuAnalysis): CompressedSajuData {
-  const { fourPillars, fiveElements, yongsin, currentYearFortune, relationships, birthInput, majorFortunes } = analysis;
+  const { fourPillars, fiveElements, yongsin, currentYearFortune, todayFortune, relationships, birthInput, majorFortunes } = analysis;
   const pillarStr = (p: typeof fourPillars.year) => `${p.ganJi.cheongan}${p.ganJi.jiji}`;
   const spouseAnalysis = analyzeSpouseStar(birthInput.gender, fourPillars, majorFortunes);
 
@@ -181,6 +191,13 @@ function compressSajuDataSimple(analysis: SajuAnalysis): CompressedSajuData {
       점수: currentYearFortune.score,
       천간십신: currentYearFortune.cheonganTenGod,
       지지십신: currentYearFortune.jijiTenGod,
+    },
+    오늘운: {
+      날짜: todayFortune.date,
+      간지: `${todayFortune.ganJi.cheongan}${todayFortune.ganJi.jiji}`,
+      점수: todayFortune.score,
+      천간십신: todayFortune.cheonganTenGod,
+      지지십신: todayFortune.jijiTenGod,
     },
     관계: relationships.map((r) => r.name),
     대운: majorFortunes.map((f) => ({
@@ -235,7 +252,7 @@ export function buildCompatSystemPrompt(): string {
 - 반드시 한국어로 작성하세요.
 - 각 섹션은 반드시 "---SECTION:key---" 마커로 시작하세요.
 - 마커 뒤에 바로 내용을 작성하세요.
-- 7개 섹션을 순서대로 모두 작성하세요: shortAdvice, overview, dayMaster, elements, personality, fortune, advice
+- 8개 섹션을 순서대로 모두 작성하세요: shortAdvice, todayMessage, overview, dayMaster, elements, personality, fortune, advice
 - shortAdvice 섹션은 반드시 한 문장(1줄)으로만 작성하세요. 나머지 섹션은 2-4문단으로 작성하세요.
 - 전문 용어는 한글(한자) 형식으로 한자를 병기하세요 (예: 용신(用神)).
 - 오행은 어떤 맥락에서든 반드시 한글(한자) 형태로 쓰세요: 목(木), 화(火), 토(土), 금(金), 수(水). 절대 木(목)처럼 한자를 앞에 쓰지 마세요.
@@ -253,7 +270,7 @@ export function buildCompatSystemPrompt(): string {
 }
 
 export function buildCompatUserPrompt(data: CompressedCompatData): string {
-  return `다음 두 사람의 사주 데이터와 궁합 분석 결과를 기반으로 7개 섹션으로 궁합을 해석해 주세요.
+  return `다음 두 사람의 사주 데이터와 궁합 분석 결과를 기반으로 8개 섹션으로 궁합을 해석해 주세요.
 
 ${JSON.stringify(data, null, 2)}
 
@@ -261,6 +278,9 @@ ${JSON.stringify(data, null, 2)}
 
 ---SECTION:shortAdvice---
 한줄 조언: 두 사람의 궁합 핵심을 담은 인상적인 조언을 정확히 한 문장으로 작성하세요. {{용어}} 마크업이나 **볼드**는 사용하지 마세요. 오행이나 천간/지지 한자 병기도 하지 마세요. 일반인이 바로 이해할 수 있는 쉬운 문장으로 쓰세요.
+
+---SECTION:todayMessage---
+오늘을 위한 한마디: 오늘(${data.사람1.오늘운.날짜})은 ${data.사람1.오늘운.간지}일입니다. 두 사람의 사주 관계와 오늘의 기운을 바탕으로, 두 사람의 관계를 위한 구체적이고 실행 가능한 조언을 1-2문장으로 작성하세요. 예시처럼 구체적으로: "오늘은 서로의 이야기에 귀 기울이기 좋은 날이니, 저녁 식사 자리에서 평소 못했던 대화를 나눠보세요." {{용어}} 마크업, **볼드**, 한자 병기를 사용하지 마세요. 일반인이 바로 이해할 수 있는 쉬운 문장으로 쓰세요.
 
 ---SECTION:overview---
 종합 궁합 해석: 두 사람의 궁합 총점(${data.궁합결과.총점}점, ${data.궁합결과.등급}등급)을 바탕으로 전체적인 궁합의 특징과 관계의 큰 흐름을 해석해 주세요. 등급의 의미와 두 사주가 만났을 때 나타나는 전체적인 에너지 흐름을 설명해 주세요.

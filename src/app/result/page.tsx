@@ -139,7 +139,7 @@ function ResultContent() {
               </motion.div>
             )}
           </motion.div>
-          <div className="mt-4">
+          <div className="mt-4 hidden">
             <PdfDownloadButton result={result} aiSections={aiSections} aiStatus={aiStatus} />
           </div>
         </div>

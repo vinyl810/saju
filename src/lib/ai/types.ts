@@ -1,6 +1,7 @@
 // ===== AI 해석 섹션 정의 =====
 
 export const AI_SECTIONS = [
+  { key: 'todayMessage', label: '오늘을 위한 한마디', icon: 'MessageCircle', layout: 'banner' },
   { key: 'overall', label: '종합운 (總合運)', icon: 'Sparkles', layout: 'full' },
   { key: 'personality', label: '성격과 기질', icon: 'User', layout: 'half' },
   { key: 'wealth', label: '재물운 (財物運)', icon: 'Coins', layout: 'half' },
@@ -19,6 +20,7 @@ export const SECTION_KEYS: AISectionKey[] = AI_SECTIONS.map((s) => s.key);
 
 export const AI_COMPAT_SECTIONS = [
   { key: 'shortAdvice', label: '한줄 조언', icon: 'Sparkles', layout: 'hidden' },
+  { key: 'todayMessage', label: '오늘을 위한 한마디', icon: 'MessageCircle', layout: 'banner' },
   { key: 'overview', label: '종합 궁합 해석', icon: 'Sparkles', layout: 'full' },
   { key: 'dayMaster', label: '일간 궁합', icon: 'User', layout: 'half' },
   { key: 'elements', label: '오행 조화', icon: 'Coins', layout: 'half' },
@@ -98,6 +100,13 @@ export interface CompressedSajuData {
   용신: string;
   희신: string;
   올해운: {
+    간지: string;
+    점수: number;
+    천간십신: string;
+    지지십신: string;
+  };
+  오늘운: {
+    날짜: string;
     간지: string;
     점수: number;
     천간십신: string;
