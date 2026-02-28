@@ -10,6 +10,7 @@ import {
   type SSEEvent,
 } from '@/lib/ai/types';
 import type { SajuAnalysis } from '@/lib/saju/types';
+import { buildSajuCacheKey, getCache, setCache } from '@/lib/ai/cache';
 
 function createInitialSections(): SectionsMap {
   const map = {} as SectionsMap;
@@ -36,6 +37,16 @@ export function useAiInterpretation() {
   );
 
   const start = useCallback(async (sajuAnalysis: SajuAnalysis) => {
+    // Check cache first
+    const cacheKey = buildSajuCacheKey(sajuAnalysis);
+    const cached = getCache<SectionsMap>(cacheKey);
+    if (cached) {
+      setSections(cached);
+      setError(null);
+      setStatus('done');
+      return;
+    }
+
     // Abort any ongoing request
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -121,6 +132,10 @@ export function useAiInterpretation() {
               }
             } else if (event.status === 'complete') {
               setStatus('done');
+              setSections((final) => {
+                setCache(cacheKey, final);
+                return final;
+              });
             } else if (event.status === 'error') {
               setError(event.message);
               setStatus('error');

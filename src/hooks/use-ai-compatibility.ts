@@ -10,6 +10,7 @@ import {
   type SSEEvent,
 } from '@/lib/ai/types';
 import type { SajuAnalysis, CompatibilityResult } from '@/lib/saju/types';
+import { buildCompatCacheKey, getCache, setCache } from '@/lib/ai/cache';
 
 function createInitialSections(): CompatSectionsMap {
   const map = {} as CompatSectionsMap;
@@ -40,6 +41,16 @@ export function useAiCompatibility() {
     person2Analysis: SajuAnalysis,
     compatResult: CompatibilityResult,
   ) => {
+    // Check cache first
+    const cacheKey = buildCompatCacheKey(person1Analysis, person2Analysis);
+    const cached = getCache<CompatSectionsMap>(cacheKey);
+    if (cached) {
+      setSections(cached);
+      setError(null);
+      setStatus('done');
+      return;
+    }
+
     // Abort any ongoing request
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -125,6 +136,10 @@ export function useAiCompatibility() {
               }
             } else if (event.status === 'complete') {
               setStatus('done');
+              setSections((final) => {
+                setCache(cacheKey, final);
+                return final;
+              });
             } else if (event.status === 'error') {
               setError(event.message);
               setStatus('error');
