@@ -28,9 +28,10 @@ function getScoreLabel(score: number): string {
 interface MajorFortuneTimelineProps {
   fortunes: MajorFortune[];
   birthYear: number;
+  forPdf?: boolean;
 }
 
-export function MajorFortuneTimeline({ fortunes, birthYear }: MajorFortuneTimelineProps) {
+export function MajorFortuneTimeline({ fortunes, birthYear, forPdf }: MajorFortuneTimelineProps) {
   const currentYear = new Date().getFullYear();
   const currentAge = currentYear - birthYear;
 
@@ -40,8 +41,8 @@ export function MajorFortuneTimeline({ fortunes, birthYear }: MajorFortuneTimeli
         <CardTitle className="font-serif text-base"><TermTooltip termKey="대운">대운 (大運) 타임라인</TermTooltip></CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto pb-2">
-          <div className="flex gap-2" style={{ minWidth: 'max-content' }}>
+        <div className={forPdf ? 'flex flex-wrap gap-2' : 'overflow-x-auto pb-2'}>
+          <div className={forPdf ? 'flex flex-wrap gap-2' : 'flex gap-2'} style={forPdf ? undefined : { minWidth: 'max-content' }}>
             {fortunes.map((fortune, idx) => {
               const isCurrent = currentAge >= fortune.startAge && currentAge <= fortune.endAge;
 

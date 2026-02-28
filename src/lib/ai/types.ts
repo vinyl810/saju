@@ -15,22 +15,40 @@ export type AISectionKey = (typeof AI_SECTIONS)[number]['key'];
 
 export const SECTION_KEYS: AISectionKey[] = AI_SECTIONS.map((s) => s.key);
 
+// ===== AI 궁합 해석 섹션 정의 =====
+
+export const AI_COMPAT_SECTIONS = [
+  { key: 'shortAdvice', label: '한줄 조언', icon: 'Sparkles', layout: 'hidden' },
+  { key: 'overview', label: '종합 궁합 해석', icon: 'Sparkles', layout: 'full' },
+  { key: 'dayMaster', label: '일간 궁합', icon: 'User', layout: 'half' },
+  { key: 'elements', label: '오행 조화', icon: 'Coins', layout: 'half' },
+  { key: 'personality', label: '성격 궁합', icon: 'Heart', layout: 'half' },
+  { key: 'fortune', label: '운세 궁합', icon: 'Calendar', layout: 'half' },
+  { key: 'advice', label: '관계 조언', icon: 'Briefcase', layout: 'full' },
+] as const;
+
+export type AICompatSectionKey = (typeof AI_COMPAT_SECTIONS)[number]['key'];
+
+export const COMPAT_SECTION_KEYS: AICompatSectionKey[] = AI_COMPAT_SECTIONS.map((s) => s.key);
+
+export type CompatSectionsMap = Record<AICompatSectionKey, SectionState>;
+
 // ===== SSE 스트리밍 이벤트 =====
 
 export interface SSEStartEvent {
-  section: AISectionKey;
+  section: string;
   status: 'start';
   label: string;
 }
 
 export interface SSEDeltaEvent {
-  section: AISectionKey;
+  section: string;
   status: 'delta';
   content: string;
 }
 
 export interface SSEDoneEvent {
-  section: AISectionKey;
+  section: string;
   status: 'done';
 }
 

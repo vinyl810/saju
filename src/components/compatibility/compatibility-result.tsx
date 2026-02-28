@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { FadeIn, motion, staggerContainer, staggerItem } from '@/components/ui/motion';
 import type { CompatibilityResult } from '@/lib/saju/types';
+import type { SectionState } from '@/lib/ai/types';
 import { TermTooltip } from '@/components/ui/term-tooltip';
 
 const GRADE_COLORS: Record<string, string> = {
@@ -38,9 +39,10 @@ function getBarColor(score: number): string {
 
 interface CompatibilityResultProps {
   result: CompatibilityResult;
+  aiAdviceState?: SectionState;
 }
 
-export function CompatibilityResultDisplay({ result }: CompatibilityResultProps) {
+export function CompatibilityResultDisplay({ result, aiAdviceState }: CompatibilityResultProps) {
   const color = GRADE_COLORS[result.grade];
   const size = 160;
   const strokeWidth = 8;
@@ -177,8 +179,23 @@ export function CompatibilityResultDisplay({ result }: CompatibilityResultProps)
         <Card className="bg-gradient-to-br from-primary/5 to-transparent">
           <CardContent className="pt-6">
             <div className="rounded-lg border border-primary/10 bg-background/50 p-4 text-center">
-              <div className="font-serif text-sm font-medium text-primary">조언</div>
-              <p className="mt-2 text-sm text-muted-foreground">{result.advice}</p>
+              <div className="font-serif text-sm font-medium text-primary">AI 조언</div>
+              {(!aiAdviceState || aiAdviceState.status === 'idle') && (
+                <div className="mt-2 flex justify-center">
+                  <div className="h-3 w-48 rounded animate-shimmer opacity-20" />
+                </div>
+              )}
+              {aiAdviceState && aiAdviceState.status === 'streaming' && (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {aiAdviceState.content}
+                  <span className="inline-block w-0.5 h-3.5 ml-0.5 align-text-bottom animate-pulse bg-primary" />
+                </p>
+              )}
+              {aiAdviceState && aiAdviceState.status === 'done' && (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {aiAdviceState.content}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

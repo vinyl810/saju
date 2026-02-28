@@ -1,16 +1,30 @@
 'use client';
 
+import { useCallback, useState } from 'react';
 import { useCompatibility } from '@/hooks/use-compatibility';
 import { CompatibilityForm } from '@/components/compatibility/compatibility-form';
 import { CompatibilityResultDisplay } from '@/components/compatibility/compatibility-result';
 import { ElementComparison } from '@/components/compatibility/element-comparison';
+import { AiCompatibility } from '@/components/compatibility/ai-compatibility';
 import { FourPillarsDisplay } from '@/components/saju/four-pillars-display';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FadeIn } from '@/components/ui/motion';
 import { TermTooltip } from '@/components/ui/term-tooltip';
+import type { BirthInput } from '@/lib/saju/types';
+import type { SectionState } from '@/lib/ai/types';
 
 export default function CompatibilityPage() {
   const { result, loading, error, calculate } = useCompatibility();
+  const [aiAdviceState, setAiAdviceState] = useState<SectionState>({ content: '', status: 'idle' });
+
+  const handleCalculate = (person1: BirthInput, person2: BirthInput) => {
+    setAiAdviceState({ content: '', status: 'idle' });
+    calculate(person1, person2);
+  };
+
+  const handleShortAdviceChange = useCallback((state: SectionState) => {
+    setAiAdviceState(state);
+  }, []);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -25,7 +39,7 @@ export default function CompatibilityPage() {
 
       <FadeIn delay={0.1}>
         <CompatibilityForm
-          onSubmit={(person1, person2) => calculate(person1, person2)}
+          onSubmit={(person1, person2) => handleCalculate(person1, person2)}
           loading={loading}
         />
       </FadeIn>
@@ -40,7 +54,7 @@ export default function CompatibilityPage() {
 
       {result && (
         <div className="mt-8 space-y-6">
-          <CompatibilityResultDisplay result={result.result} />
+          <CompatibilityResultDisplay result={result.result} aiAdviceState={aiAdviceState} />
 
           <FadeIn delay={0.3}>
             <ElementComparison
@@ -71,6 +85,14 @@ export default function CompatibilityPage() {
               </Card>
             </FadeIn>
           </div>
+
+          {/* AI 궁합 해석 */}
+          <AiCompatibility
+            person1Analysis={result.person1Analysis}
+            person2Analysis={result.person2Analysis}
+            compatResult={result.result}
+            onShortAdviceChange={handleShortAdviceChange}
+          />
         </div>
       )}
     </div>

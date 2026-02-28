@@ -1,5 +1,7 @@
 'use client';
 
+import { usePdfMode } from '@/components/saju/pdf-mode-context';
+
 function getScoreColor(score: number): string {
   if (score >= 70) return '#22c55e'; // green
   if (score >= 50) return '#eab308'; // yellow
@@ -20,6 +22,28 @@ interface ScoreGaugeProps {
 }
 
 export function ScoreGauge({ score, size = 64, strokeWidth = 5, label }: ScoreGaugeProps) {
+  const isPdf = usePdfMode();
+
+  // PDF 모드: SVG gradient가 html2canvas에서 깨지므로 순수 div로 대체
+  if (isPdf) {
+    const color = getScoreColor(score);
+    return (
+      <div
+        className="flex flex-col items-center justify-center rounded-full border-4 shrink-0"
+        style={{
+          width: size,
+          height: size,
+          borderColor: color,
+        }}
+      >
+        <span className="text-lg font-bold leading-none" style={{ color }}>
+          {score}
+        </span>
+        {label && <span className="text-[10px] text-muted-foreground">{label}</span>}
+      </div>
+    );
+  }
+
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;

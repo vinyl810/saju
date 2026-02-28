@@ -2,31 +2,31 @@
 
 import { useCallback, useRef, useState } from 'react';
 import {
-  SECTION_KEYS,
-  type AISectionKey,
-  type SectionsMap,
+  COMPAT_SECTION_KEYS,
+  type AICompatSectionKey,
+  type CompatSectionsMap,
   type SectionState,
   type StreamingStatus,
   type SSEEvent,
 } from '@/lib/ai/types';
-import type { SajuAnalysis } from '@/lib/saju/types';
+import type { SajuAnalysis, CompatibilityResult } from '@/lib/saju/types';
 
-function createInitialSections(): SectionsMap {
-  const map = {} as SectionsMap;
-  for (const key of SECTION_KEYS) {
+function createInitialSections(): CompatSectionsMap {
+  const map = {} as CompatSectionsMap;
+  for (const key of COMPAT_SECTION_KEYS) {
     map[key] = { content: '', status: 'idle' };
   }
   return map;
 }
 
-export function useAiInterpretation() {
-  const [sections, setSections] = useState<SectionsMap>(createInitialSections);
+export function useAiCompatibility() {
+  const [sections, setSections] = useState<CompatSectionsMap>(createInitialSections);
   const [status, setStatus] = useState<StreamingStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const updateSection = useCallback(
-    (key: AISectionKey, updater: (prev: SectionState) => SectionState) => {
+    (key: AICompatSectionKey, updater: (prev: SectionState) => SectionState) => {
       setSections((prev) => ({
         ...prev,
         [key]: updater(prev[key]),
@@ -35,7 +35,11 @@ export function useAiInterpretation() {
     [],
   );
 
-  const start = useCallback(async (sajuAnalysis: SajuAnalysis) => {
+  const start = useCallback(async (
+    person1Analysis: SajuAnalysis,
+    person2Analysis: SajuAnalysis,
+    compatResult: CompatibilityResult,
+  ) => {
     // Abort any ongoing request
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -47,10 +51,10 @@ export function useAiInterpretation() {
     setStatus('loading');
 
     try {
-      const response = await fetch('/api/ai-interpretation', {
+      const response = await fetch('/api/ai-compatibility', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sajuAnalysis }),
+        body: JSON.stringify({ person1Analysis, person2Analysis, compatResult }),
         signal: controller.signal,
       });
 
@@ -95,7 +99,7 @@ export function useAiInterpretation() {
             const event: SSEEvent = JSON.parse(trimmed.slice(6));
 
             if ('section' in event) {
-              const sectionKey = event.section as AISectionKey;
+              const sectionKey = event.section as AICompatSectionKey;
 
               switch (event.status) {
                 case 'start':
@@ -135,7 +139,7 @@ export function useAiInterpretation() {
       setStatus((prev) => (prev === 'streaming' ? 'done' : prev));
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
-      const message = err instanceof Error ? err.message : 'AI 해석 중 오류가 발생했습니다.';
+      const message = err instanceof Error ? err.message : 'AI 궁합 해석 중 오류가 발생했습니다.';
       setError(message);
       setStatus('error');
     }

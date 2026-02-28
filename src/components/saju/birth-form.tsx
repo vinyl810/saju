@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -54,12 +54,14 @@ const DAY_OPTIONS = Array.from({ length: 31 }, (_, i) => ({
 
 interface BirthFormProps {
   onSubmit?: (input: BirthInput) => void;
+  onChange?: (input: BirthInput) => void;
   loading?: boolean;
   title?: string;
   compact?: boolean;
+  hideSubmit?: boolean;
 }
 
-export function BirthForm({ onSubmit, loading = false, title = '생년월일시 입력', compact = false }: BirthFormProps) {
+export function BirthForm({ onSubmit, onChange, loading = false, title = '생년월일시 입력', compact = false, hideSubmit = false }: BirthFormProps) {
   const router = useRouter();
   const [year, setYear] = useState('1990');
   const [month, setMonth] = useState('1');
@@ -99,6 +101,32 @@ export function BirthForm({ onSubmit, loading = false, title = '생년월일시 
 
     return null;
   }, [year, hour, birthPlace, birthLongitude, birthUtcOffset, customLongitude, useCustomLongitude]);
+
+  // onChange 모드: 필드가 변할 때마다 부모에 현재 입력값 전달
+  useEffect(() => {
+    if (!onChange) return;
+
+    const effectiveLongitude = useCustomLongitude && customLongitude
+      ? parseFloat(customLongitude)
+      : birthLongitude;
+    const effectiveUtcOffset = useCustomLongitude ? undefined : birthUtcOffset;
+
+    onChange({
+      year: parseInt(year),
+      month: parseInt(month),
+      day: parseInt(day),
+      hour: parseInt(hour),
+      minute: 0,
+      gender,
+      isLunar,
+      isLeapMonth,
+      useYajasi,
+      birthPlace: useCustomLongitude ? undefined : (birthPlace || undefined),
+      longitude: effectiveLongitude,
+      utcOffset: effectiveUtcOffset,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [year, month, day, hour, gender, isLunar, isLeapMonth, useYajasi, birthPlace, birthLongitude, birthUtcOffset, customLongitude, useCustomLongitude]);
 
   const handleCityPickerChange = (city: { name: string; longitude: number; latitude: number; utcOffset: number } | null) => {
     if (city) {
@@ -359,9 +387,11 @@ export function BirthForm({ onSubmit, loading = false, title = '생년월일시 
             )}
           </div>
 
-          <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {loading ? '분석 중...' : '분석하기'}
-          </Button>
+          {!hideSubmit && (
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {loading ? '분석 중...' : '분석하기'}
+            </Button>
+          )}
         </form>
       </CardContent>
     </Card>

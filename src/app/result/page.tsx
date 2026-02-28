@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useEffect, Suspense } from 'react';
+import { useEffect, useCallback, useState, Suspense } from 'react';
 import { useSajuCalculation } from '@/hooks/use-saju-calculation';
 import { FourPillarsDisplay } from '@/components/saju/four-pillars-display';
 import { ElementChart } from '@/components/saju/element-chart';
@@ -16,7 +16,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FadeIn, motion, scaleIn, staggerContainer } from '@/components/ui/motion';
 import { ResultSkeleton } from '@/components/saju/result-skeleton';
+import { PdfDownloadButton } from '@/components/saju/pdf-download-button';
 import type { BirthInput, Gender } from '@/lib/saju/types';
+import type { SectionsMap, StreamingStatus } from '@/lib/ai/types';
 import { TermTooltip } from '@/components/ui/term-tooltip';
 import { generateRelationshipDef } from '@/lib/saju/terminology';
 import { PILLAR_LABEL } from '@/lib/saju/types';
@@ -32,6 +34,13 @@ const HOUR_LABELS: Record<number, string> = {
 function ResultContent() {
   const searchParams = useSearchParams();
   const { result, loading, error, calculate } = useSajuCalculation();
+  const [aiSections, setAiSections] = useState<SectionsMap | null>(null);
+  const [aiStatus, setAiStatus] = useState<StreamingStatus>('idle');
+
+  const handleAiSectionsChange = useCallback((sections: SectionsMap, status: StreamingStatus) => {
+    setAiSections(sections);
+    setAiStatus(status);
+  }, []);
 
   useEffect(() => {
     const year = searchParams.get('year');
@@ -130,6 +139,9 @@ function ResultContent() {
               </motion.div>
             )}
           </motion.div>
+          <div className="mt-4">
+            <PdfDownloadButton result={result} aiSections={aiSections} aiStatus={aiStatus} />
+          </div>
         </div>
       </FadeIn>
 
@@ -209,7 +221,7 @@ function ResultContent() {
       </FadeIn>
 
       {/* AI Interpretation Section */}
-      <AiInterpretation analysis={result} />
+      <AiInterpretation analysis={result} onSectionsChange={handleAiSectionsChange} />
     </div>
   );
 }

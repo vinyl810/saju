@@ -1,18 +1,17 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, Noto_Serif_KR } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Noto_Serif_KR } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import { AuthGate } from "@/components/layout/auth-gate";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const pretendard = localFont({
+  src: "./fonts/PretendardVariable.woff2",
+  variable: "--font-pretendard",
+  display: "swap",
+  weight: "45 920",
 });
 
 const notoSerifKR = Noto_Serif_KR({
@@ -20,6 +19,13 @@ const notoSerifKR = Noto_Serif_KR({
   subsets: ["latin"],
   weight: ["400", "700", "900"],
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 export const metadata: Metadata = {
   title: "사주팔자 - 四柱八字",
@@ -35,16 +41,18 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${notoSerifKR.variable} antialiased`}
+        className={`${pretendard.variable} ${notoSerifKR.variable} antialiased`}
       >
         <ThemeProvider>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">
-              {children}
-            </main>
-            <Footer />
-          </div>
+          <AuthGate>
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main className="flex-1">
+                {children}
+              </main>
+              <Footer />
+            </div>
+          </AuthGate>
         </ThemeProvider>
       </body>
     </html>

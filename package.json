@@ -13,6 +13,8 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.34.2",
+    "html2canvas-pro": "^2.0.2",
+    "jspdf": "^4.2.0",
     "korean-lunar-calendar": "^0.3.6",
     "leaflet": "^1.9.4",
     "lightningcss-win32-x64-msvc": "^1.31.1",
