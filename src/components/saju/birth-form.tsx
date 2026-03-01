@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -72,6 +72,9 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
   const [isLeapMonth, setIsLeapMonth] = useState(false);
   const [useYajasi, setUseYajasi] = useState(false);
 
+  // 출생지역 미입력 경고
+  const [birthPlaceWarningShown, setBirthPlaceWarningShown] = useState(false);
+
   // 고급 옵션
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [birthPlace, setBirthPlace] = useState('');
@@ -136,6 +139,7 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
       setBirthUtcOffset(city.utcOffset);
       setUseCustomLongitude(false);
       setCustomLongitude('');
+      setBirthPlaceWarningShown(false);
     } else {
       setBirthPlace('');
       setBirthLongitude(undefined);
@@ -146,6 +150,12 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 출생지역 미입력 시 경고 표시 (첫 클릭에서만 차단)
+    if (!birthPlace && !useCustomLongitude && !birthPlaceWarningShown) {
+      setBirthPlaceWarningShown(true);
+      return;
+    }
 
     const effectiveLongitude = useCustomLongitude && customLongitude
       ? parseFloat(customLongitude)
@@ -387,9 +397,16 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
             )}
           </div>
 
+          {birthPlaceWarningShown && (
+            <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-200">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>출생 지역을 입력하지 않으면 진태양시 보정이 적용되지 않아 정확도가 떨어질 수 있습니다.</span>
+            </div>
+          )}
+
           {!hideSubmit && (
             <Button type="submit" className="w-full" size="lg" disabled={loading}>
-              {loading ? '분석 중...' : '분석하기'}
+              {loading ? '분석 중...' : birthPlaceWarningShown ? '그래도 분석하기' : '분석하기'}
             </Button>
           )}
         </form>
