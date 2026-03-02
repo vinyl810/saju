@@ -21,12 +21,14 @@ export function CompatibilityForm({ onSubmit, loading }: CompatibilityFormProps)
           title="첫 번째 사람"
           compact
           hideSubmit
+          hideAnalysisMode
           onChange={(input) => { person1Ref.current = input; }}
         />
         <BirthForm
           title="두 번째 사람"
           compact
           hideSubmit
+          hideAnalysisMode
           onChange={(input) => { person2Ref.current = input; }}
         />
       </div>

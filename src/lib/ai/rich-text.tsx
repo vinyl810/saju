@@ -12,6 +12,12 @@ const KEYWORD_ELEMENT_MAP: Record<string, FiveElement> = {
   '木(목)': '목', '火(화)': '화', '土(토)': '토', '金(금)': '금', '水(수)': '수',
 };
 
+// 천간 bare 글자 → 오행 매핑 (간지 두 글자 조합용)
+const CHEONGAN_BARE_ELEMENT: Record<string, FiveElement> = {
+  '갑': '목', '을': '목', '병': '화', '정': '화', '무': '토',
+  '기': '토', '경': '금', '신': '금', '임': '수', '계': '수',
+};
+
 // 천간/지지 개별 글자 → 오행 색상 매핑 (한글(한자) 형태)
 const GANJI_ELEMENT_MAP: Record<string, FiveElement> = {
   // 10천간
@@ -63,10 +69,10 @@ const GANJI_CHARS = Object.entries(GANJI_ELEMENT_MAP).map(([k, el]) => {
   const suffix = ELEMENT_HANGUL[el];
   return `${escaped}(?:${suffix}(?!\\())?`;
 }).join('|');
-const OUTER_RE = new RegExp(
-  `(\\*\\*(.+?)\\*\\*)|(목\\(木\\)|화\\(火\\)|토\\(土\\)|금\\(金\\)|수\\(水\\)|木\\(목\\)|火\\(화\\)|土\\(토\\)|金\\(금\\)|水\\(수\\))|(${GANJI_CHARS})`,
-  'g',
-);
+const MONTH_GANJI = `(\\d{1,2}월)\\s*\\(?([갑을병정무기경신임계][자축인묘진사오미신유술해])\\)?\\s*(?:\\[(\\d{4})년\\])?\\s*:?`;
+const BASE_PATTERN = `(\\*\\*(.+?)\\*\\*)|(목\\(木\\)|화\\(火\\)|토\\(土\\)|금\\(金\\)|수\\(水\\)|木\\(목\\)|火\\(화\\)|土\\(토\\)|金\\(금\\)|水\\(수\\))|(${GANJI_CHARS})`;
+const OUTER_RE = new RegExp(BASE_PATTERN, 'g');
+const OUTER_RE_MONTHLY = new RegExp(`${BASE_PATTERN}|${MONTH_GANJI}`, 'g');
 
 // 전처리: {{금(金)}} 처럼 SAJU_TERMS에 없는 내용이 {{}}로 감싸진 경우 중괄호 제거
 // SAJU_TERMS에 있는 유효한 용어(예: {{용신}})는 보존
@@ -76,16 +82,17 @@ function stripInvalidTermMarkup(text: string): string {
   });
 }
 
-export function renderRichText(content: string): React.ReactNode[] {
+export function renderRichText(content: string, options?: { monthlyFortune?: boolean }): React.ReactNode[] {
   content = stripInvalidTermMarkup(content);
 
+  const re = options?.monthlyFortune ? OUTER_RE_MONTHLY : OUTER_RE;
   const nodes: React.ReactNode[] = [];
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  OUTER_RE.lastIndex = 0;
+  re.lastIndex = 0;
 
-  while ((match = OUTER_RE.exec(content)) !== null) {
+  while ((match = re.exec(content)) !== null) {
     // Plain text before match — parse {{term}} in it
     if (match.index > lastIndex) {
       nodes.push(...parseTermMarkup(content.slice(lastIndex, match.index), lastIndex));
@@ -114,6 +121,36 @@ export function renderRichText(content: string): React.ReactNode[] {
       nodes.push(
         <span key={match.index} style={{ color: el ? ELEMENT_COLORS[el] : undefined, fontWeight: 500 }}>
           {match[4]}
+        </span>,
+      );
+    } else if (match[5]) {
+      // 월별 간지 패턴: "3월 (신묘)" or "1월 (경인) [2027년]" → 뱃지 렌더링
+      const monthLabel = match[5];
+      const ganji = match[6];
+      const yearLabel = match[7]; // optional [YYYY년] capture
+      const el = CHEONGAN_BARE_ELEMENT[ganji[0]];
+      nodes.push(
+        <span key={`sep-${match.index}`} className="block mt-2 first:mt-0" />,
+        <span key={match.index} className="inline-flex items-center gap-1 mr-1 align-baseline">
+          <span className="inline-block rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-semibold text-primary">
+            {monthLabel}
+          </span>
+          <span
+            className="inline-block rounded-md px-1.5 py-0.5 text-xs font-mono font-semibold"
+            style={{
+              color: el ? ELEMENT_COLORS[el] : undefined,
+              backgroundColor: el ? `${ELEMENT_COLORS[el]}15` : undefined,
+              border: el ? `1px solid ${ELEMENT_COLORS[el]}40` : undefined,
+            }}
+          >
+            {ganji}
+          </span>
+          {yearLabel && (
+            <span className="inline-block rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              {yearLabel}년
+            </span>
+          )}
+          <span className="inline-block h-1 w-1 rounded-full bg-muted-foreground/40" />
         </span>,
       );
     }

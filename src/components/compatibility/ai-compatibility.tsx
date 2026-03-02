@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,9 +60,45 @@ function ShimmerSkeleton() {
         </div>
       </Card>
 
-      <p className="text-center text-sm text-muted-foreground animate-pulse">
-        AI가 궁합을 분석하고 있습니다...
-      </p>
+      <LoadingMessages />
+    </div>
+  );
+}
+
+const COMPAT_LOADING_MESSAGES = [
+  '두 사주 비교 분석 중',
+  '오행 궁합 확인 중',
+  '관계 흐름 파악 중',
+  '궁합 조언 준비 중',
+];
+
+function LoadingMessages() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % COMPAT_LOADING_MESSAGES.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center gap-2 py-2">
+      <div key={index} className="flex items-center gap-2 animate-fade-in-up">
+        <Sparkles className="h-4 w-4 text-primary" />
+        <p className="text-sm text-muted-foreground">
+          {COMPAT_LOADING_MESSAGES[index]}
+        </p>
+      </div>
+      <div className="flex items-center gap-1">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce-dot"
+            style={{ animationDelay: `${i * 0.16}s` }}
+          />
+        ))}
+      </div>
     </div>
   );
 }

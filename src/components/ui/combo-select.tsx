@@ -226,7 +226,12 @@ export function ComboSelect({
                         'hover:bg-accent hover:text-accent-foreground',
                     )}
                     onPointerDown={(e) => {
-                      e.preventDefault(); // input blur 방지
+                      // 마우스에서만 blur 방지; 터치는 허용해야 스크롤 가능
+                      if (e.pointerType !== 'touch') {
+                        e.preventDefault();
+                      }
+                    }}
+                    onClick={() => {
                       handleSelect(option.value);
                     }}
                   >

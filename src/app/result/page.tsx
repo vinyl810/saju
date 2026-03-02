@@ -18,7 +18,7 @@ import { FadeIn, motion, scaleIn, staggerContainer } from '@/components/ui/motio
 import { ResultSkeleton } from '@/components/saju/result-skeleton';
 import { PdfDownloadButton } from '@/components/saju/pdf-download-button';
 import type { BirthInput, Gender } from '@/lib/saju/types';
-import type { SectionsMap, StreamingStatus } from '@/lib/ai/types';
+import type { AnalysisMode, SectionsMap, StreamingStatus } from '@/lib/ai/types';
 import { TermTooltip } from '@/components/ui/term-tooltip';
 import { generateRelationshipDef } from '@/lib/saju/terminology';
 import { PILLAR_LABEL } from '@/lib/saju/types';
@@ -31,11 +31,17 @@ const HOUR_LABELS: Record<number, string> = {
   23: '야자시(23시)',
 };
 
+const ANALYSIS_MODE_KEY = 'saju-analysis-mode';
+
 function ResultContent() {
   const searchParams = useSearchParams();
   const { result, loading, error, calculate } = useSajuCalculation();
   const [aiSections, setAiSections] = useState<SectionsMap | null>(null);
   const [aiStatus, setAiStatus] = useState<StreamingStatus>('idle');
+  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>(() => {
+    if (typeof window === 'undefined') return 'graduate';
+    return (localStorage.getItem(ANALYSIS_MODE_KEY) as AnalysisMode) || 'graduate';
+  });
 
   const handleAiSectionsChange = useCallback((sections: SectionsMap, status: StreamingStatus) => {
     setAiSections(sections);
@@ -56,6 +62,10 @@ function ResultContent() {
       const utcOffsetStr = searchParams.get('utcOffset');
       const utcOffset = utcOffsetStr ? parseFloat(utcOffsetStr) : undefined;
 
+      const degreeProgram = searchParams.get('degreeProgram') as BirthInput['degreeProgram'] | null;
+      const semesterStr = searchParams.get('semester');
+      const semester = semesterStr ? parseInt(semesterStr) : undefined;
+
       const input: BirthInput = {
         year: parseInt(year),
         month: parseInt(month),
@@ -69,6 +79,8 @@ function ResultContent() {
         birthPlace,
         longitude,
         utcOffset,
+        ...(degreeProgram && { degreeProgram }),
+        ...(semester && { semester }),
       };
       calculate(input);
     }
@@ -105,7 +117,9 @@ function ResultContent() {
       {/* Header */}
       <FadeIn>
         <div className="mb-6 text-center">
-          <h1 className="font-serif text-2xl font-bold sm:text-3xl"><TermTooltip termKey="사주팔자">사주팔자</TermTooltip> 분석 결과</h1>
+          <h1 className="font-serif text-2xl font-bold sm:text-3xl">
+            <TermTooltip termKey="사주팔자">사주팔자</TermTooltip>·{analysisMode === 'graduate' ? '대학원생용' : '일반인용'} 분석 결과
+          </h1>
           <motion.div
             className="mt-3 flex flex-wrap justify-center gap-2"
             variants={staggerContainer}
@@ -221,7 +235,7 @@ function ResultContent() {
       </FadeIn>
 
       {/* AI Interpretation Section */}
-      <AiInterpretation analysis={result} onSectionsChange={handleAiSectionsChange} />
+      <AiInterpretation key={analysisMode} analysis={result} mode={analysisMode} onSectionsChange={handleAiSectionsChange} />
     </div>
   );
 }

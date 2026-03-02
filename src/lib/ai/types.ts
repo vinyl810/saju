@@ -1,3 +1,7 @@
+// ===== 분석 모드 =====
+
+export type AnalysisMode = 'graduate' | 'general';
+
 // ===== AI 해석 섹션 정의 =====
 
 export const AI_SECTIONS = [
@@ -12,9 +16,34 @@ export const AI_SECTIONS = [
   { key: 'yearAdvice', label: '올해의 조언', icon: 'Calendar', layout: 'full' },
 ] as const;
 
-export type AISectionKey = (typeof AI_SECTIONS)[number]['key'];
+export const AI_SECTIONS_GRADUATE = [
+  { key: 'todayMessage', label: '오늘을 위한 한마디', icon: 'MessageCircle', layout: 'banner' },
+  { key: 'monthlyFortune', label: '월별 운세 (月別運勢)', icon: 'Calendar', layout: 'full' },
+  { key: 'overall', label: '종합 분석', icon: 'Sparkles', layout: 'full' },
+  { key: 'characterTraits', label: '성격과 기질', icon: 'User', layout: 'half' },
+  { key: 'personality', label: '연구 성향', icon: 'User', layout: 'half' },
+  { key: 'wealth', label: '학업운 (學業運)', icon: 'Coins', layout: 'half' },
+  { key: 'career', label: '진로운 (進路運)', icon: 'Briefcase', layout: 'half' },
+  { key: 'love', label: '대인관계운', icon: 'Heart', layout: 'half' },
+  { key: 'marriage', label: '졸업운 (卒業運)', icon: 'ScrollText', layout: 'half' },
+  { key: 'romance', label: '연애운 (戀愛運)', icon: 'HeartHandshake', layout: 'half' },
+  { key: 'marriageFortune', label: '결혼운 (結婚運)', icon: 'Gem', layout: 'half' },
+  { key: 'health', label: '멘탈·건강운', icon: 'Activity', layout: 'half' },
+  { key: 'labLife', label: '연구실 생활운 (硏究室運)', icon: 'FlaskConical', layout: 'half' },
+  { key: 'professorRelation', label: '교수·상사 관계운', icon: 'GraduationCap', layout: 'half' },
+  { key: 'paperAcceptance', label: '논문운 (論文運)', icon: 'FileCheck', layout: 'half' },
+  { key: 'yearAdvice', label: '올해의 조언', icon: 'Calendar', layout: 'full' },
+] as const;
 
-export const SECTION_KEYS: AISectionKey[] = AI_SECTIONS.map((s) => s.key);
+export type AISectionKey = (typeof AI_SECTIONS)[number]['key'] | (typeof AI_SECTIONS_GRADUATE)[number]['key'];
+
+export const SECTION_KEYS: AISectionKey[] = [
+  ...new Set([...AI_SECTIONS.map((s) => s.key), ...AI_SECTIONS_GRADUATE.map((s) => s.key)]),
+];
+
+export function getAiSections(mode: AnalysisMode = 'general') {
+  return mode === 'graduate' ? AI_SECTIONS_GRADUATE : AI_SECTIONS;
+}
 
 // ===== AI 궁합 해석 섹션 정의 =====
 
@@ -130,4 +159,14 @@ export interface CompressedSajuData {
     배우자궁에배우자성: boolean;
     결혼적기: string[];
   };
+  월별운?: {
+    년: number;
+    월: number;
+    간지: string;
+    점수: number;
+    천간십신: string;
+    지지십신: string;
+  }[];
+  학위과정?: string;   // '석사' | '박사' | '석박통합'
+  재학학기?: number;
 }

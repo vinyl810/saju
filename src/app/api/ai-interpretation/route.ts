@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { compressSajuData, buildSystemPrompt, buildUserPrompt } from '@/lib/ai/prompt-builder';
 import { createGeminiStream, parseGeminiStream } from '@/lib/ai/gemini-stream';
-import { AI_SECTIONS, type AISectionKey } from '@/lib/ai/types';
+import { getAiSections, type AISectionKey, type AnalysisMode } from '@/lib/ai/types';
 import type { SajuAnalysis } from '@/lib/saju/types';
 import { logger } from '@/lib/logger';
 
@@ -25,9 +25,13 @@ export async function POST(request: NextRequest) {
   }
 
   let sajuAnalysis: SajuAnalysis;
+  let mode: AnalysisMode = 'graduate';
   try {
     const body = await request.json();
     sajuAnalysis = body.sajuAnalysis;
+    if (body.mode === 'general' || body.mode === 'graduate') {
+      mode = body.mode;
+    }
     if (!sajuAnalysis?.fourPillars) {
       throw new Error('Invalid saju analysis data');
     }
@@ -39,14 +43,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const compressed = compressSajuData(sajuAnalysis);
-  const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildUserPrompt(compressed);
+  const compressed = compressSajuData(sajuAnalysis, mode);
+  const systemPrompt = buildSystemPrompt(mode);
+  const userPrompt = buildUserPrompt(compressed, mode);
 
-  logger.info(MODULE, 'AI 해석 스트리밍 시작', { model });
+  logger.info(MODULE, 'AI 해석 스트리밍 시작', { model, mode });
 
+  const sections = getAiSections(mode);
   const sectionLabels = Object.fromEntries(
-    AI_SECTIONS.map((s) => [s.key, s.label]),
+    sections.map((s) => [s.key, s.label]),
   ) as Record<AISectionKey, string>;
 
   const encoder = new TextEncoder();
@@ -59,6 +64,7 @@ export async function POST(request: NextRequest) {
           model,
           systemPrompt,
           userPrompt,
+          ...(mode === 'graduate' && { maxTokens: 20480 }),
         });
 
         let currentSection: AISectionKey | null = null;
@@ -107,8 +113,8 @@ export async function POST(request: NextRequest) {
 
           // Emit remaining buffer content as delta for current section
           if (currentSection && textBuffer.length > 0) {
-            // Keep a small buffer to avoid splitting markers (longest: ---SECTION:yearAdvice--- = 24 chars)
-            const safeLength = textBuffer.length - 30;
+            // Keep a small buffer to avoid splitting markers (longest: ---SECTION:professorRelation--- = 33 chars)
+            const safeLength = textBuffer.length - 40;
             if (safeLength > 0) {
               const content = textBuffer.slice(0, safeLength);
               textBuffer = textBuffer.slice(safeLength);

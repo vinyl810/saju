@@ -1,4 +1,5 @@
 import type { SajuAnalysis } from '@/lib/saju/types';
+import type { AnalysisMode } from './types';
 
 const CACHE_PREFIX = 'ai-cache:';
 const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID || 'dev';
@@ -12,8 +13,8 @@ function inputKey(a: SajuAnalysis): string {
   return `${b.year}-${b.month}-${b.day}-${b.hour}-${b.gender}-${b.isLunar}`;
 }
 
-export function buildSajuCacheKey(analysis: SajuAnalysis): string {
-  return `${CACHE_PREFIX}saju:${inputKey(analysis)}:${today()}:${BUILD_ID}`;
+export function buildSajuCacheKey(analysis: SajuAnalysis, mode: AnalysisMode = 'general'): string {
+  return `${CACHE_PREFIX}saju:${mode}:${inputKey(analysis)}:${today()}:${BUILD_ID}`;
 }
 
 export function buildCompatCacheKey(p1: SajuAnalysis, p2: SajuAnalysis): string {

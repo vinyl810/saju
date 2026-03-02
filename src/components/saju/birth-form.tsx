@@ -19,7 +19,21 @@ import { ComboSelect } from '@/components/ui/combo-select';
 import { calculateSolarTimeCorrectionByLongitude } from '@/lib/saju/solar-time';
 import { CityPicker } from '@/components/saju/city-picker';
 import type { BirthInput, Gender } from '@/lib/saju/types';
+import type { AnalysisMode } from '@/lib/ai/types';
 import { TermTooltip } from '@/components/ui/term-tooltip';
+
+const ANALYSIS_MODE_KEY = 'saju-analysis-mode';
+
+const DEGREE_PROGRAMS = [
+  { value: '석사', label: '석사' },
+  { value: '박사', label: '박사' },
+  { value: '석박통합', label: '석박통합' },
+];
+
+const SEMESTER_OPTIONS = Array.from({ length: 16 }, (_, i) => ({
+  value: String(i + 1),
+  label: `${i + 1}학기`,
+}));
 
 const HOUR_OPTIONS = [
   { value: '0', label: '자시 (子) 00:00~00:59' },
@@ -59,9 +73,10 @@ interface BirthFormProps {
   title?: string;
   compact?: boolean;
   hideSubmit?: boolean;
+  hideAnalysisMode?: boolean;
 }
 
-export function BirthForm({ onSubmit, onChange, loading = false, title = '생년월일시 입력', compact = false, hideSubmit = false }: BirthFormProps) {
+export function BirthForm({ onSubmit, onChange, loading = false, title = '생년월일시 입력', compact = false, hideSubmit = false, hideAnalysisMode = false }: BirthFormProps) {
   const router = useRouter();
   const [year, setYear] = useState('1990');
   const [month, setMonth] = useState('1');
@@ -71,6 +86,16 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
   const [isLunar, setIsLunar] = useState(false);
   const [isLeapMonth, setIsLeapMonth] = useState(false);
   const [useYajasi, setUseYajasi] = useState(false);
+
+  // 대학원생 모드 전용
+  const [degreeProgram, setDegreeProgram] = useState<'석사' | '박사' | '석박통합' | ''>('');
+  const [semester, setSemester] = useState('');
+
+  // 분석 모드
+  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>(() => {
+    if (typeof window === 'undefined') return 'graduate';
+    return (localStorage.getItem(ANALYSIS_MODE_KEY) as AnalysisMode) || 'graduate';
+  });
 
   // 출생지역 미입력 경고
   const [birthPlaceWarningShown, setBirthPlaceWarningShown] = useState(false);
@@ -127,9 +152,11 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
       birthPlace: useCustomLongitude ? undefined : (birthPlace || undefined),
       longitude: effectiveLongitude,
       utcOffset: effectiveUtcOffset,
+      ...(analysisMode === 'graduate' && degreeProgram && { degreeProgram }),
+      ...(analysisMode === 'graduate' && semester && { semester: parseInt(semester) }),
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [year, month, day, hour, gender, isLunar, isLeapMonth, useYajasi, birthPlace, birthLongitude, birthUtcOffset, customLongitude, useCustomLongitude]);
+  }, [year, month, day, hour, gender, isLunar, isLeapMonth, useYajasi, birthPlace, birthLongitude, birthUtcOffset, customLongitude, useCustomLongitude, degreeProgram, semester, analysisMode]);
 
   const handleCityPickerChange = (city: { name: string; longitude: number; latitude: number; utcOffset: number } | null) => {
     if (city) {
@@ -148,8 +175,13 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
     }
   };
 
+  // 대학원생 모드에서 학위과정 미선택 시 제출 차단
+  const degreeMissing = analysisMode === 'graduate' && !degreeProgram;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (degreeMissing) return;
 
     // 출생지역 미입력 시 경고 표시 (첫 클릭에서만 차단)
     if (!birthPlace && !useCustomLongitude && !birthPlaceWarningShown) {
@@ -176,6 +208,8 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
       birthPlace: useCustomLongitude ? undefined : (birthPlace || undefined),
       longitude: effectiveLongitude,
       utcOffset: effectiveUtcOffset,
+      ...(analysisMode === 'graduate' && degreeProgram && { degreeProgram }),
+      ...(analysisMode === 'graduate' && semester && { semester: parseInt(semester) }),
     };
 
     if (onSubmit) {
@@ -191,6 +225,8 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
       if (input.birthPlace) params.set('birthPlace', input.birthPlace);
       if (input.longitude !== undefined) params.set('longitude', String(input.longitude));
       if (input.utcOffset !== undefined) params.set('utcOffset', String(input.utcOffset));
+      if (input.degreeProgram) params.set('degreeProgram', input.degreeProgram);
+      if (input.semester) params.set('semester', String(input.semester));
       router.push(`/result?${params.toString()}`);
     }
   };
@@ -206,7 +242,7 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
           <div className="space-y-2">
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="year">년</Label>
+                <Label htmlFor="year">년 <span className="text-destructive">*</span></Label>
                 <ComboSelect
                   id="year"
                   value={year}
@@ -217,7 +253,7 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="month">월</Label>
+                <Label htmlFor="month">월 <span className="text-destructive">*</span></Label>
                 <ComboSelect
                   id="month"
                   value={month}
@@ -228,7 +264,7 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="day">일</Label>
+                <Label htmlFor="day">일 <span className="text-destructive">*</span></Label>
                 <ComboSelect
                   id="day"
                   value={day}
@@ -268,7 +304,7 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
           {/* 시간 */}
           <div className="space-y-2">
             <div className="space-y-1.5">
-              <Label htmlFor="hour">태어난 시간</Label>
+              <Label htmlFor="hour">태어난 시간 <span className="text-destructive">*</span></Label>
               <Select value={hour} onValueChange={setHour}>
                 <SelectTrigger id="hour">
                   <SelectValue />
@@ -397,6 +433,66 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
             )}
           </div>
 
+          {/* 분석 모드 선택 */}
+          {!hideAnalysisMode && <div className="rounded-lg border bg-muted/30 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium">분석 모드</Label>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="mode-switch" className={`text-xs cursor-pointer ${analysisMode === 'general' ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                  일반인용
+                </Label>
+                <Switch
+                  id="mode-switch"
+                  checked={analysisMode === 'graduate'}
+                  onCheckedChange={(checked) => {
+                    const mode: AnalysisMode = checked ? 'graduate' : 'general';
+                    setAnalysisMode(mode);
+                    localStorage.setItem(ANALYSIS_MODE_KEY, mode);
+                  }}
+                />
+                <Label htmlFor="mode-switch" className={`text-xs cursor-pointer ${analysisMode === 'graduate' ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                  대학원생용
+                </Label>
+              </div>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {analysisMode === 'graduate'
+                ? 'AI 해석이 연구·논문·졸업 등 대학원 맥락으로 제공됩니다.'
+                : 'AI 해석이 재물·직업·연애·결혼 등 일반 맥락으로 제공됩니다.'}
+            </p>
+            {analysisMode === 'graduate' && (
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="degree-program" className="text-xs">학위과정 <span className="text-destructive">*</span></Label>
+                  <Select value={degreeProgram} onValueChange={(v) => setDegreeProgram(v as typeof degreeProgram)}>
+                    <SelectTrigger id="degree-program" className={`w-full ${!degreeProgram ? 'text-muted-foreground' : ''}`}>
+                      <SelectValue placeholder="선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {DEGREE_PROGRAMS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="semester" className="text-xs">재학학기</Label>
+                  <ComboSelect
+                    id="semester"
+                    value={semester}
+                    onValueChange={setSemester}
+                    options={SEMESTER_OPTIONS}
+                    placeholder="선택"
+                    min={1}
+                    max={16}
+                  />
+                </div>
+              </div>
+            )}
+          </div>}
+
           {birthPlaceWarningShown && (
             <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-200">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -405,7 +501,7 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
           )}
 
           {!hideSubmit && (
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+            <Button type="submit" className="w-full" size="lg" disabled={loading || degreeMissing}>
               {loading ? '분석 중...' : birthPlaceWarningShown ? '그래도 분석하기' : '분석하기'}
             </Button>
           )}

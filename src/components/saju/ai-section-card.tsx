@@ -1,17 +1,18 @@
 'use client';
 
 import React from 'react';
-import { Sparkles, User, Coins, Briefcase, Heart, Gem, Activity, Calendar, MessageCircle } from 'lucide-react';
+import { Sparkles, User, Coins, Briefcase, Heart, Gem, Activity, Calendar, MessageCircle, FlaskConical, GraduationCap, FileCheck, HeartHandshake, ScrollText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { FadeIn } from '@/components/ui/motion';
 import { ScoreGauge } from '@/components/fortune/score-gauge';
-import type { AISectionKey, SectionState } from '@/lib/ai/types';
-import { AI_SECTIONS } from '@/lib/ai/types';
+import type { AISectionKey, AnalysisMode, SectionState } from '@/lib/ai/types';
+import { getAiSections } from '@/lib/ai/types';
 import { ELEMENT_COLORS } from '@/lib/saju/constants';
 import type { SajuAnalysis, FiveElement } from '@/lib/saju/types';
 import {
   getSectionDemographics,
+  getSectionSummary,
   type SectionDemographics,
   type OverallDemographics,
   type PersonalityDemographics,
@@ -21,6 +22,14 @@ import {
   type MarriageDemographics,
   type HealthDemographics,
   type YearAdviceDemographics,
+  type MonthlyFortuneDemographics,
+  type LabLifeDemographics,
+  type ProfessorRelationDemographics,
+  type PaperAcceptanceDemographics,
+  type RomanceDemographics,
+  type InterpersonalDemographics,
+  type GraduationDemographics,
+  type ResearchPersonalityDemographics,
 } from '@/lib/ai/section-demographics';
 import { renderRichText } from '@/lib/ai/rich-text';
 
@@ -34,6 +43,11 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Activity,
   Calendar,
   MessageCircle,
+  FlaskConical,
+  GraduationCap,
+  FileCheck,
+  HeartHandshake,
+  ScrollText,
 };
 
 // ===== 데모그래픽 헤더 렌더링 =====
@@ -86,6 +100,11 @@ function PersonalityHeader({ data }: { data: PersonalityDemographics }) {
           {w}
         </Badge>
       ))}
+      {data.tenGods.map((tg, i) => (
+        <Badge key={i} variant="secondary" className="text-xs">
+          {tg.label} ({tg.hanja})
+        </Badge>
+      ))}
     </div>
   );
 }
@@ -93,6 +112,11 @@ function PersonalityHeader({ data }: { data: PersonalityDemographics }) {
 function WealthHeader({ data }: { data: WealthDemographics }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      {data.keywords.map((kw) => (
+        <Badge key={kw} variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-200 text-xs">
+          {kw}
+        </Badge>
+      ))}
       {data.tenGods.map((tg, i) => (
         <Badge key={i} variant="secondary" className="text-xs">
           {tg.label} ({tg.hanja})
@@ -121,9 +145,13 @@ function CareerHeader({ data }: { data: CareerDemographics }) {
 }
 
 function LoveHeader({ data }: { data: LoveDemographics }) {
-  if (data.relationships.length === 0) return null;
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      {data.keywords.map((kw) => (
+        <Badge key={kw} variant="secondary" className="bg-pink-100 text-pink-800 dark:bg-pink-800 dark:text-pink-200 text-xs">
+          {kw}
+        </Badge>
+      ))}
       {data.relationships.map((r, i) => (
         <Badge
           key={i}
@@ -190,12 +218,20 @@ function HealthHeader({ data }: { data: HealthDemographics }) {
         </div>
       ))}
       {data.missing.length > 0 && (
-        <div className="flex items-center gap-1 mt-1">
-          <span className="text-xs text-muted-foreground">부족:</span>
+        <div className="flex items-center justify-center gap-1.5 mt-2 pt-2 border-t border-dashed border-muted">
+          <span className="text-[11px] text-muted-foreground/70">부족한 기운</span>
           {data.missing.map((el) => (
-            <Badge key={el} variant="outline" className="text-xs px-1.5 py-0" style={{ borderColor: ELEMENT_COLORS[el], color: ELEMENT_COLORS[el] }}>
+            <span
+              key={el}
+              className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium"
+              style={{
+                color: ELEMENT_COLORS[el],
+                backgroundColor: `${ELEMENT_COLORS[el]}12`,
+              }}
+            >
+              <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: ELEMENT_COLORS[el] }} />
               {el}
-            </Badge>
+            </span>
           ))}
         </div>
       )}
@@ -225,6 +261,182 @@ function YearAdviceHeader({ data }: { data: YearAdviceDemographics }) {
   );
 }
 
+function LabLifeHeader({ data }: { data: LabLifeDemographics }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {data.keywords.map((kw) => (
+        <Badge key={kw} variant="secondary" className="bg-teal-100 text-teal-800 dark:bg-teal-800 dark:text-teal-200 text-xs">
+          {kw}
+        </Badge>
+      ))}
+      {data.tenGods.map((tg, i) => (
+        <Badge key={i} variant="secondary" className="text-xs">
+          {tg.label} ({tg.hanja})
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function ProfessorRelationHeader({ data }: { data: ProfessorRelationDemographics }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {data.keywords.map((kw) => (
+        <Badge key={kw} variant="secondary" className="bg-indigo-100 text-indigo-800 dark:bg-indigo-800 dark:text-indigo-200 text-xs">
+          {kw}
+        </Badge>
+      ))}
+      {data.tenGods.map((tg, i) => (
+        <Badge key={i} variant="secondary" className="text-xs">
+          {tg.label} ({tg.hanja})
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function PaperAcceptanceHeader({ data }: { data: PaperAcceptanceDemographics }) {
+  return (
+    <div className="flex items-center gap-3">
+      <ScoreGauge score={data.yearScore} size={60} strokeWidth={5} label="점" />
+      <div className="flex flex-wrap items-center gap-1.5">
+        <Badge
+          variant="outline"
+          className="font-mono text-xs"
+          style={{ borderColor: ELEMENT_COLORS[data.yearGanJi.element], color: ELEMENT_COLORS[data.yearGanJi.element] }}
+        >
+          {data.yearGanJi.label} {data.yearGanJi.hanja}
+        </Badge>
+        {data.tenGods.map((tg, i) => (
+          <Badge key={i} variant="secondary" className="text-xs">
+            {tg.label} ({tg.hanja})
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function InterpersonalHeader({ data }: { data: InterpersonalDemographics }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {data.keywords.map((kw) => (
+        <Badge key={kw} variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-200 text-xs">
+          {kw}
+        </Badge>
+      ))}
+      {data.relationships.map((r, i) => (
+        <Badge
+          key={`r-${i}`}
+          variant={r.type === 'combine' ? 'default' : 'destructive'}
+          className="text-xs"
+        >
+          {r.name}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function ResearchPersonalityHeader({ data }: { data: ResearchPersonalityDemographics }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {data.keywords.map((kw) => (
+        <Badge key={kw} variant="secondary" className="bg-cyan-100 text-cyan-800 dark:bg-cyan-800 dark:text-cyan-200 text-xs">
+          {kw}
+        </Badge>
+      ))}
+      {data.tenGods.map((tg, i) => (
+        <Badge key={i} variant="secondary" className="text-xs">
+          {tg.label} ({tg.hanja})
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function GraduationHeader({ data }: { data: GraduationDemographics }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {data.keywords.map((kw) => (
+        <Badge key={kw} variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-200 text-xs">
+          {kw}
+        </Badge>
+      ))}
+      {data.tenGods.map((tg, i) => (
+        <Badge key={i} variant="secondary" className="text-xs">
+          {tg.label} ({tg.hanja})
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function RomanceHeader({ data }: { data: RomanceDemographics }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {data.keywords.map((kw) => (
+        <Badge key={kw} variant="secondary" className="bg-pink-100 text-pink-800 dark:bg-pink-800 dark:text-pink-200 text-xs">
+          {kw}
+        </Badge>
+      ))}
+      {data.spouseStars.map((tg, i) => (
+        <Badge key={i} variant="secondary" className="text-xs">
+          {tg.label} ({tg.hanja})
+        </Badge>
+      ))}
+      {data.relationships.map((r, i) => (
+        <Badge
+          key={`r-${i}`}
+          variant={r.type === 'combine' ? 'default' : 'destructive'}
+          className="text-xs"
+        >
+          {r.name}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function MonthlyFortuneHeader({ data }: { data: MonthlyFortuneDemographics }) {
+  const maxScore = Math.max(...data.months.map((m) => m.score), 1);
+  return (
+    <div className="grid grid-cols-6 gap-2 sm:grid-cols-12 sm:gap-1.5">
+      {data.months.map((m) => {
+        const ratio = m.score / maxScore;
+        const height = Math.round(ratio * 72);
+        const barColor =
+          m.score >= 70
+            ? 'from-green-400 to-green-600'
+            : m.score >= 50
+              ? 'from-yellow-400 to-yellow-500'
+              : 'from-red-400 to-red-500';
+        return (
+          <div key={m.month} className="flex flex-col items-center gap-1">
+            <span className="text-xs font-bold tabular-nums text-foreground">{m.score}</span>
+            <div className="w-full flex items-end justify-center" style={{ height: '72px' }}>
+              <div
+                className={`w-full rounded-t-md bg-gradient-to-t ${barColor}`}
+                style={{ height: `${Math.max(height, 6)}px` }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-foreground">{m.month}월</span>
+            <span
+              className="rounded-sm px-1 py-px text-[11px] font-mono font-semibold leading-tight"
+              style={{
+                color: ELEMENT_COLORS[m.ganJi.element],
+                backgroundColor: `${ELEMENT_COLORS[m.ganJi.element]}15`,
+              }}
+            >
+              {m.ganJi.label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function DemographicHeader({ demographics }: { demographics: SectionDemographics }) {
   switch (demographics.kind) {
     case 'overall':
@@ -243,6 +455,22 @@ function DemographicHeader({ demographics }: { demographics: SectionDemographics
       return <HealthHeader data={demographics} />;
     case 'yearAdvice':
       return <YearAdviceHeader data={demographics} />;
+    case 'monthlyFortune':
+      return <MonthlyFortuneHeader data={demographics} />;
+    case 'labLife':
+      return <LabLifeHeader data={demographics} />;
+    case 'professorRelation':
+      return <ProfessorRelationHeader data={demographics} />;
+    case 'paperAcceptance':
+      return <PaperAcceptanceHeader data={demographics} />;
+    case 'romance':
+      return <RomanceHeader data={demographics} />;
+    case 'interpersonal':
+      return <InterpersonalHeader data={demographics} />;
+    case 'graduation':
+      return <GraduationHeader data={demographics} />;
+    case 'researchPersonality':
+      return <ResearchPersonalityHeader data={demographics} />;
     default:
       return null;
   }
@@ -254,14 +482,39 @@ interface AISectionCardProps {
   sectionKey: AISectionKey;
   state: SectionState;
   analysis?: SajuAnalysis;
+  mode?: AnalysisMode;
 }
 
-export function AISectionCard({ sectionKey, state, analysis }: AISectionCardProps) {
-  const section = AI_SECTIONS.find((s) => s.key === sectionKey);
-  if (!section || state.status === 'idle') return null;
+const NO_SUMMARY_SECTIONS = new Set(['todayMessage', 'monthlyFortune']);
+
+function parseSummaryAndBody(raw: string, sectionKey: string): { aiSummary: string | null; body: string } {
+  if (NO_SUMMARY_SECTIONS.has(sectionKey)) return { aiSummary: null, body: raw };
+  const idx = raw.indexOf('\n\n');
+  if (idx === -1) return { aiSummary: null, body: raw };
+  const firstLine = raw.slice(0, idx).trim();
+  // 한마디는 짧아야 함 (100자 이하), 길면 본문의 첫 문단일 가능성
+  if (firstLine.length > 100) return { aiSummary: null, body: raw };
+  return { aiSummary: firstLine, body: raw.slice(idx + 2) };
+}
+
+export function AISectionCard({ sectionKey, state, analysis, mode = 'general' }: AISectionCardProps) {
+  const sections = getAiSections(mode);
+  const section = sections.find((s) => s.key === sectionKey);
+  if (!section || !state || state.status === 'idle') return null;
 
   const Icon = ICON_MAP[section.icon];
-  const demographics = analysis ? getSectionDemographics(sectionKey, analysis) : null;
+  const demographics = analysis ? getSectionDemographics(sectionKey, analysis, mode) : null;
+  const fallbackSummary = demographics ? getSectionSummary(demographics) : null;
+
+  // AI가 섹션 라벨을 반복 출력하는 경우 제거 (e.g. "2026년 올해의 조언:", "종합운:" 등)
+  const label = section.label.replace(/\s*\(.*\)$/, ''); // "종합 분석", "연구 성향" 등
+  const labelPattern = `^\\s*(?:\\d{4}년\\s*)?${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[:：]\\s*`;
+  const cleaned = state.content.replace(new RegExp(labelPattern), '');
+
+  const { aiSummary, body } = parseSummaryAndBody(cleaned, sectionKey);
+  // AI 한마디가 파싱되면 사용, 아직 스트리밍 중이면 fallback
+  const summary = aiSummary ?? fallbackSummary;
+  const content = aiSummary ? body : cleaned;
 
   return (
     <FadeIn className={`${section.layout === 'full' ? 'col-span-full' : ''} h-full`}>
@@ -283,9 +536,16 @@ export function AISectionCard({ sectionKey, state, analysis }: AISectionCardProp
             </div>
           )}
         </CardHeader>
+        {summary && (
+          <div className="relative mx-6 mb-1 rounded-md bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 px-8 py-3 text-center">
+            <span className="absolute left-3 top-1.5 font-serif text-2xl leading-none text-primary/20 select-none" aria-hidden="true">&ldquo;</span>
+            <p className="font-serif text-base leading-relaxed text-foreground/70">{summary}</p>
+            <span className="absolute right-3 bottom-1.5 font-serif text-2xl leading-none text-primary/20 select-none" aria-hidden="true">&rdquo;</span>
+          </div>
+        )}
         <CardContent>
           <div className="whitespace-pre-wrap text-[0.9375rem] leading-relaxed text-muted-foreground">
-            {renderRichText(state.content)}
+            {renderRichText(content, sectionKey === 'monthlyFortune' ? { monthlyFortune: true } : undefined)}
             {state.status === 'streaming' && (
               <span className="inline-block w-0.5 h-4 ml-0.5 align-text-bottom animate-pulse bg-primary" />
             )}

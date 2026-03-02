@@ -187,6 +187,8 @@ export interface BirthInput {
   birthPlace?: string;  // 출생 도시 (진태양시 보정용)
   longitude?: number;   // 출생지 경도 (진태양시 보정용)
   utcOffset?: number;   // 출생지 UTC 오프셋 (진태양시 보정용)
+  degreeProgram?: '석사' | '박사' | '석박통합';  // 학위과정 (대학원생 모드)
+  semester?: number;    // 재학학기 1~16 (대학원생 모드)
 }
 
 export interface SolarTimeCorrectionInfo {

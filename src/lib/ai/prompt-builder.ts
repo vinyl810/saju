@@ -1,8 +1,10 @@
 import type { SajuAnalysis, CompatibilityResult } from '@/lib/saju/types';
-import type { CompressedSajuData } from './types';
+import type { CompressedSajuData, AnalysisMode } from './types';
 import { analyzeSpouseStar, formatSpousePalace, formatTimingWindow } from '@/lib/saju/spouse-star';
+import { calculateMonthlyFortune } from '@/lib/saju/yearly-fortune';
+import { interpretMonthlyFortune } from '@/lib/saju/interpretation';
 
-export function compressSajuData(analysis: SajuAnalysis): CompressedSajuData {
+export function compressSajuData(analysis: SajuAnalysis, mode: AnalysisMode = 'general'): CompressedSajuData {
   const { fourPillars, fiveElements, yongsin, currentYearFortune, todayFortune, relationships, birthInput, majorFortunes } = analysis;
 
   const pillarStr = (p: typeof fourPillars.year) =>
@@ -11,7 +13,7 @@ export function compressSajuData(analysis: SajuAnalysis): CompressedSajuData {
   // 배우자성 분석
   const spouseAnalysis = analyzeSpouseStar(birthInput.gender, fourPillars, majorFortunes);
 
-  return {
+  const base: CompressedSajuData = {
     사주: {
       년주: pillarStr(fourPillars.year),
       월주: pillarStr(fourPillars.month),
@@ -63,16 +65,42 @@ export function compressSajuData(analysis: SajuAnalysis): CompressedSajuData {
       결혼적기: spouseAnalysis.marriageTimingWindows.map(formatTimingWindow),
     },
   };
+
+  if (mode === 'graduate') {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 1-based
+    base.월별운 = Array.from({ length: 12 }, (_, i) => {
+      const m = ((currentMonth - 1 + i) % 12) + 1;
+      const y = currentYear + Math.floor((currentMonth - 1 + i) / 12);
+      const raw = calculateMonthlyFortune(y, m, fourPillars);
+      const interpreted = interpretMonthlyFortune(raw, yongsin);
+      return {
+        년: y,
+        월: m,
+        간지: `${interpreted.ganJi.cheongan}${interpreted.ganJi.jiji}`,
+        점수: interpreted.score,
+        천간십신: interpreted.cheonganTenGod,
+        지지십신: interpreted.jijiTenGod,
+      };
+    });
+    if (birthInput.degreeProgram) {
+      base.학위과정 = birthInput.degreeProgram;
+    }
+    if (birthInput.semester) {
+      base.재학학기 = birthInput.semester;
+    }
+  }
+
+  return base;
 }
 
-export function buildSystemPrompt(): string {
-  return `당신은 동양 명리학(사주팔자) 전문가입니다. 사주 데이터를 기반으로 깊이 있고 통찰력 있는 해석을 제공합니다.
-
-규칙:
+export function buildSystemPrompt(mode: AnalysisMode = 'general'): string {
+  const baseRules = `규칙:
 - 반드시 한국어로 작성하세요.
 - 각 섹션은 반드시 "---SECTION:key---" 마커로 시작하세요.
-- 마커 뒤에 바로 내용을 작성하세요.
-- 9개 섹션을 순서대로 모두 작성하세요: todayMessage, overall, personality, wealth, career, love, marriage, health, yearAdvice
+- 마커 뒤에 바로 내용을 작성하세요. 섹션 이름/라벨(예: "종합운:", "성격과 기질:", "연구 성향:")을 반복하지 마세요.
+- 일반 모드는 9개, 대학원생 모드는 14개 섹션을 순서대로 모두 작성하세요.
 - 각 섹션은 2-4문단으로 작성하세요.
 - 전문 용어는 한글(한자) 형식으로 한자를 병기하세요 (예: 용신(用神)).
 - 오행은 어떤 맥락에서든 반드시 한글(한자) 형태로 쓰세요: 목(木), 화(火), 토(土), 금(金), 수(水). 절대 木(목)처럼 한자를 앞에 쓰지 마세요.
@@ -87,10 +115,29 @@ export function buildSystemPrompt(): string {
 - 마크업 제외: 일반 한국어 단어, 오행 이름(목·화·토·금·수는 별도 색상 처리됨)
 - 한자를 병기할 때는 {{용어}} 마크업 안에 넣고 한자는 바깥에 쓰세요: {{용신}}(用神), {{대운}}(大運)
 - 개별 천간(갑·을·병·정·무·기·경·신·임·계)과 지지(자·축·인·묘·진·사·오·미·신·유·술·해)는 {{}}로 감싸지 말고 반드시 한글(한자) 형태로 쓰세요: 계(癸), 임(壬), 신(申) 등. 이들은 자동으로 오행 색상이 적용됩니다.
-- 한 용어가 여러 번 등장하면 첫 1~2회만 마크업하세요.`;
+- 한 용어가 여러 번 등장하면 첫 1~2회만 마크업하세요.
+- todayMessage, monthlyFortune 섹션을 제외한 모든 섹션의 첫 줄에, 이 사람의 해당 운을 인상적으로 요약하는 한마디를 적으세요. 한마디 뒤에 빈 줄을 하나 넣고 본문을 시작하세요. 한마디에는 {{용어}} 마크업이나 **볼드**를 사용하지 마세요.
+- 한마디 작성 규칙: 반드시 자연스러운 구어체 문장으로 끝내세요. 명사형 종결("~의 소유자", "~의 기운", "~하는 타입")은 절대 금지입니다. 좋은 예: "돈이 알아서 따라오는 팔자예요", "연구실에서 빛을 발할 사주입니다", "사람을 끌어당기는 매력이 있어요". 나쁜 예: "강한 재물 에너지의 소유자", "안정적 직업운의 기운". 친구에게 말하듯 편하게 쓰세요.`;
+
+  if (mode === 'graduate') {
+    return `당신은 동양 명리학(사주팔자) 전문가이자 대학원생 진로·학업 상담 전문가입니다. 사주 데이터를 기반으로 대학원생의 관점에서 깊이 있고 통찰력 있는 해석을 제공합니다.
+
+${baseRules}
+- 16개 섹션을 순서대로 모두 작성하세요: todayMessage, monthlyFortune, overall, characterTraits, personality, wealth, career, love, marriage, romance, marriageFortune, health, labLife, professorRelation, paperAcceptance, yearAdvice
+- 모든 해석은 대학원생(석사/박사)의 맥락에 맞춰 작성하세요.
+- 연구, 논문, 지도교수, 연구실, 학회, 졸업, 포닥, 취업 등 대학원 생활과 관련된 조언을 제공하세요.
+- 대학원생이 공감할 수 있는 구체적인 상황과 예시를 활용하세요.
+- 학위과정, 재학학기, 나이 정보가 제공된 경우, 반드시 이를 활용하여 현실적인 시기 판단을 하세요.
+- [중요] 대운 시기를 언급할 때, 이 사용자의 현재 나이·학위과정·재학학기를 반드시 고려하세요. 졸업 후에는 더 이상 대학원생이 아닙니다. 예를 들어 석사 1학기(만 26세)인 사람에게 "36세에 장학금 운이 좋다"는 조언은 비현실적입니다. 학위과정 중에 해당하는 대운 시기만 학업·연구 맥락으로 해석하고, 졸업 이후 시기는 직장·커리어 맥락으로 전환하세요.`;
+  }
+
+  return `당신은 동양 명리학(사주팔자) 전문가입니다. 사주 데이터를 기반으로 깊이 있고 통찰력 있는 해석을 제공합니다.
+
+${baseRules}
+- 9개 섹션을 순서대로 모두 작성하세요: todayMessage, overall, personality, wealth, career, love, marriage, health, yearAdvice`;
 }
 
-export function buildUserPrompt(data: CompressedSajuData): string {
+export function buildUserPrompt(data: CompressedSajuData, mode: AnalysisMode = 'general'): string {
   const currentYear = new Date().getFullYear();
 
   const spouseStarsStr = data.결혼분석.배우자성.join('/');
@@ -104,46 +151,92 @@ export function buildUserPrompt(data: CompressedSajuData): string {
       ? data.결혼분석.결혼적기[0]
       : '해당 없음';
 
+  if (mode === 'graduate') {
+    const monthlyLines = data.월별운
+      ? data.월별운.map((m) => {
+          const yearTag = m.년 !== data.월별운![0].년 ? ` [${m.년}년]` : '';
+          return `${m.월}월 (${m.간지})${yearTag} ← 점수${m.점수}, ${m.천간십신}/${m.지지십신} 참고하여 1-2문장 작성`;
+        }).join('\n')
+      : '';
+
+    const currentAge = currentYear - data.생년;
+    const remainingSemesters: Record<string, number> = { '석사': 4, '박사': 10, '석박통합': 12 };
+    const totalSem = data.학위과정 ? (remainingSemesters[data.학위과정] ?? 8) : 8;
+    const semNow = data.재학학기 ?? 1;
+    const semLeft = Math.max(totalSem - semNow, 0);
+    const gradAge = currentAge + Math.ceil(semLeft / 2);
+
+    const degreeInfo = data.학위과정
+      ? `이 사용자는 만 ${currentAge}세, ${data.학위과정} 과정${data.재학학기 ? ` ${data.재학학기}학기` : ''} 대학원생입니다. 예상 졸업 나이는 약 ${gradAge}세입니다. 대운에서 시기를 언급할 때, ${gradAge}세 이전은 학업·연구 맥락으로, 이후는 졸업 후 커리어 맥락으로 해석하세요. 장학금·연구비·논문 등 학업 관련 조언은 반드시 재학 기간(~${gradAge}세) 내의 대운만 참조하세요.\n\n`
+      : `이 사용자는 만 ${currentAge}세 대학원생입니다.\n\n`;
+
+    return `${degreeInfo}다음 사주 데이터를 대학원생의 관점에서 분석하여 16개 섹션으로 해석해 주세요.
+
+${JSON.stringify(data, null, 2)}
+
+섹션별 작성 지침 (이 지침 텍스트 자체를 출력에 포함하지 마세요):
+- todayMessage: 오늘(${data.오늘운.날짜}) ${data.오늘운.간지}일, 십신 ${data.오늘운.천간십신}/${data.오늘운.지지십신}을 바탕으로 대학원생의 하루에 대한 조언을 1-2문장으로 작성. 라벨 없이 바로 본문만. {{용어}} 마크업, **볼드**, 한자 병기 금지.
+- monthlyFortune: 아래 템플릿의 "←" 이후를 삭제하고 운세 1-2문장을 채워 넣기. 줄 형식 유지. 콜론(:) 추가 금지. 연도 따로 쓰지 않기. {{용어}} 마크업, **볼드** 금지.
+${monthlyLines}
+- overall: 사주의 전체적인 특징과 대학원 생활·학업의 큰 흐름. 대운에서 학업·연구에 유리한/도전적인 시기 언급.
+- characterTraits: 일간과 오행 분포 기반으로 성격, 기질, 대인관계 성향 분석.
+- personality: 연구 적성, 학습 스타일, 지도교수와의 궁합 성향. 적합한 연구 분야나 방법론.
+- wealth: 재성(편재/정재)과 오행 흐름 기반 학업 성취, 장학금·연구비 운. 대운에서 학업 성취 높은 시기.
+- career: 관성(편관/정관)과 적성 기반 학계 vs 산업계 적합성, 포닥/취업 방향. 대운에서 진로 성취 유리한 시기.
+- love: 연구실 동료 협업, 학회 네트워크 등 대학원 내 대인관계. 지도교수는 별도 섹션. 대운에서 인간관계 좋은 시기.
+- marriage: 사주 구조와 대운 흐름 기반 졸업 시기, 학위 취득 흐름. 논문 완성, 심사 통과에 좋은 시기.
+- romance: 연애 성향과 인연의 특성. 대학원생 맥락의 만남 장소. 대운에서 연애 인연 좋은 시기.
+- marriageFortune: 배우자성(${spouseStarsStr}), 배우자궁(${data.결혼분석.배우자궁}), 배우자성 ${data.결혼분석.배우자성개수}개 기반 배우자 성향과 결혼 생활. [필수] 결혼 적령기를 반드시 구체적으로 제시하세요(대운 기반 "만 XX~XX세" 형태). 적령기 대운: ${timingStr}. 40세 이후만 있으면 "늦은 인연"으로 자연스럽게 표현.
+- health: 오행 불균형 기반 번아웃, 스트레스 관리, 체력. 대운에서 멘탈 약해지는 시기 대처법.
+- labLife: 비겁/인성/식상 배치 기반 연구실 적응력, 동료 관계. 강점과 주의점.
+- professorRelation: 관성/인성 배치 기반 지도교수·상사 관계 성향. 갈등 시기와 팁.
+- paperAcceptance: 식상/재성 흐름 기반 논문 투고·리뷰·억셉 시기. 대운과 세운에서 논문 성과 좋은 시기.
+- yearAdvice: ${currentYear}년 세운(${data.올해운.간지})과 사주의 상호작용 기반 대학원 생활 조언. 현재 대운 시기 참조.
+
+출력 형식 — 각 마커 뒤에 해당 섹션의 내용만 작성하세요:
+---SECTION:todayMessage---
+---SECTION:monthlyFortune---
+---SECTION:overall---
+---SECTION:characterTraits---
+---SECTION:personality---
+---SECTION:wealth---
+---SECTION:career---
+---SECTION:love---
+---SECTION:marriage---
+---SECTION:romance---
+---SECTION:marriageFortune---
+---SECTION:health---
+---SECTION:labLife---
+---SECTION:professorRelation---
+---SECTION:paperAcceptance---
+---SECTION:yearAdvice---`;
+  }
+
   return `다음 사주 데이터를 분석하여 9개 섹션으로 해석해 주세요.
 
 ${JSON.stringify(data, null, 2)}
 
-각 섹션은 다음 마커로 시작해 주세요:
+섹션별 작성 지침 (이 지침 텍스트 자체를 출력에 포함하지 마세요):
+- todayMessage: 오늘(${data.오늘운.날짜}) ${data.오늘운.간지}일, 십신 ${data.오늘운.천간십신}/${data.오늘운.지지십신}을 바탕으로 하루 조언 1-2문장. 라벨 없이 바로 본문만. {{용어}} 마크업, **볼드**, 한자 병기 금지. 쉬운 문장.
+- overall: 사주의 전체적인 특징과 삶의 큰 흐름. 대운에서 좋은/도전적인 시기.
+- personality: 일간과 오행 분포 기반 성격, 기질, 대인관계 성향.
+- wealth: 재성(편재/정재)과 오행 흐름 기반 재물 운세. 대운에서 재물 기회 시기.
+- career: 관성(편관/정관)과 적성 기반 직업과 사회적 성취. 대운에서 승진/성취 시기.
+- love: 사주 구조 기반 연애, 인연의 특성. 대운에서 연애 인연 좋은 시기.
+- marriage: 배우자성(${spouseStarsStr}), 배우자궁(${data.결혼분석.배우자궁}), 배우자성 ${data.결혼분석.배우자성개수}개 기반 배우자 성향과 결혼 생활. 적령기 대운: ${timingStr}. 40세 이후만 있으면 "늦은 인연"으로 자연스럽게 표현.
+- health: 오행 불균형 기반 건강 유의사항. 대운에서 기신이 강한 시기 주의점.
+- yearAdvice: ${currentYear}년 세운(${data.올해운.간지})과 사주의 상호작용 기반 조언. 현재 대운 시기 참조.
 
+출력 형식 — 각 마커 뒤에 해당 섹션의 내용만 작성하세요:
 ---SECTION:todayMessage---
-오늘을 위한 한마디: 오늘(${data.오늘운.날짜})은 ${data.오늘운.간지}일이고, 이 사주(일간: ${data.일간}, 용신: ${data.용신})에게 오늘의 십신은 ${data.오늘운.천간십신}/${data.오늘운.지지십신}입니다. 이 정보를 바탕으로 오늘 하루에 대한 구체적이고 실행 가능한 조언을 1-2문장으로 작성하세요. 예시처럼 구체적으로: "오늘은 새로운 사람과의 만남에 좋은 기운이 있으니, 모임이나 약속을 적극적으로 잡아보세요." {{용어}} 마크업, **볼드**, 한자 병기를 사용하지 마세요. 일반인이 바로 이해할 수 있는 쉬운 문장으로 쓰세요.
-
 ---SECTION:overall---
-종합운: 이 사주의 전체적인 특징과 삶의 큰 흐름을 해석해 주세요.
-대운 흐름에서 전체적으로 좋은 시기와 도전적인 시기를 언급해 주세요.
-
 ---SECTION:personality---
-성격과 기질: 일간과 오행 분포를 기반으로 성격, 기질, 대인관계 성향을 분석해 주세요.
-
 ---SECTION:wealth---
-재물운: 재성(편재/정재)과 오행 흐름을 기반으로 재물 운세를 해석해 주세요.
-대운에서 재성(편재/정재)이 나타나는 시기를 재물 기회로 언급해 주세요.
-
 ---SECTION:career---
-직업운: 관성(편관/정관)과 적성을 기반으로 직업과 사회적 성취를 분석해 주세요.
-대운에서 관성(편관/정관)이 나타나는 시기를 승진/성취 시기로 언급해 주세요.
-
 ---SECTION:love---
-연애운: 사주 구조를 기반으로 연애, 인연의 특성을 해석해 주세요.
-대운 데이터를 참고하여 연애 인연이 좋은 시기를 언급해 주세요.
-
 ---SECTION:marriage---
-결혼운: 배우자성(${spouseStarsStr}) 분석을 기반으로 배우자 성향, 결혼 생활의 특성을 해석해 주세요.
-배우자궁(일지: ${data.결혼분석.배우자궁})과 배우자성 개수(${data.결혼분석.배우자성개수}개)를 분석하세요.
-결혼 시기는 현실적인 적령기(25~39세) 구간의 대운을 중심으로 언급하세요. 적령기 대운: ${timingStr}.
-40세 이후 시기만 있더라도 "늦은 인연"으로 자연스럽게 표현하되, 비현실적으로 느껴지지 않도록 주의하세요.
-
 ---SECTION:health---
-건강운: 오행 불균형과 사주 구조를 기반으로 건강 유의사항을 분석해 주세요.
-대운에서 기신이 강한 시기의 건강 유의사항을 언급해 주세요.
-
----SECTION:yearAdvice---
-${currentYear}년 올해의 조언: 올해 세운(${data.올해운.간지})과 사주의 상호작용을 기반으로 구체적인 조언을 제공해 주세요. 현재 대운 시기도 참조하여 올해의 위치를 설명해 주세요.`;
+---SECTION:yearAdvice---`;
 }
 
 // ===== 궁합 AI 해석 프롬프트 =====
@@ -251,7 +344,7 @@ export function buildCompatSystemPrompt(): string {
 규칙:
 - 반드시 한국어로 작성하세요.
 - 각 섹션은 반드시 "---SECTION:key---" 마커로 시작하세요.
-- 마커 뒤에 바로 내용을 작성하세요.
+- 마커 뒤에 바로 내용을 작성하세요. 섹션 이름/라벨(예: "종합운:", "성격과 기질:", "연구 성향:")을 반복하지 마세요.
 - 8개 섹션을 순서대로 모두 작성하세요: shortAdvice, todayMessage, overview, dayMaster, elements, personality, fortune, advice
 - shortAdvice 섹션은 반드시 한 문장(1줄)으로만 작성하세요. 나머지 섹션은 2-4문단으로 작성하세요.
 - 전문 용어는 한글(한자) 형식으로 한자를 병기하세요 (예: 용신(用神)).
@@ -280,7 +373,7 @@ ${JSON.stringify(data, null, 2)}
 한줄 조언: 두 사람의 궁합 핵심을 담은 인상적인 조언을 정확히 한 문장으로 작성하세요. {{용어}} 마크업이나 **볼드**는 사용하지 마세요. 오행이나 천간/지지 한자 병기도 하지 마세요. 일반인이 바로 이해할 수 있는 쉬운 문장으로 쓰세요.
 
 ---SECTION:todayMessage---
-오늘을 위한 한마디: 오늘(${data.사람1.오늘운.날짜})은 ${data.사람1.오늘운.간지}일입니다. 두 사람의 사주 관계와 오늘의 기운을 바탕으로, 두 사람의 관계를 위한 구체적이고 실행 가능한 조언을 1-2문장으로 작성하세요. 예시처럼 구체적으로: "오늘은 서로의 이야기에 귀 기울이기 좋은 날이니, 저녁 식사 자리에서 평소 못했던 대화를 나눠보세요." {{용어}} 마크업, **볼드**, 한자 병기를 사용하지 마세요. 일반인이 바로 이해할 수 있는 쉬운 문장으로 쓰세요.
+오늘(${data.사람1.오늘운.날짜})은 ${data.사람1.오늘운.간지}일입니다. 두 사람의 사주 관계와 오늘의 기운을 바탕으로, 두 사람의 관계를 위한 구체적이고 실행 가능한 조언을 1-2문장으로 작성하세요. "오늘을 위한 한마디:" 같은 라벨을 붙이지 말고 바로 본문만 쓰세요. {{용어}} 마크업, **볼드**, 한자 병기를 사용하지 마세요. 일반인이 바로 이해할 수 있는 쉬운 문장으로 쓰세요.
 
 ---SECTION:overview---
 종합 궁합 해석: 두 사람의 궁합 총점(${data.궁합결과.총점}점, ${data.궁합결과.등급}등급)을 바탕으로 전체적인 궁합의 특징과 관계의 큰 흐름을 해석해 주세요. 등급의 의미와 두 사주가 만났을 때 나타나는 전체적인 에너지 흐름을 설명해 주세요.

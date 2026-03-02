@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 import {
   SECTION_KEYS,
   type AISectionKey,
+  type AnalysisMode,
   type SectionsMap,
   type SectionState,
   type StreamingStatus,
@@ -36,9 +37,9 @@ export function useAiInterpretation() {
     [],
   );
 
-  const start = useCallback(async (sajuAnalysis: SajuAnalysis) => {
+  const start = useCallback(async (sajuAnalysis: SajuAnalysis, mode: AnalysisMode = 'graduate') => {
     // Check cache first
-    const cacheKey = buildSajuCacheKey(sajuAnalysis);
+    const cacheKey = buildSajuCacheKey(sajuAnalysis, mode);
     const cached = getCache<SectionsMap>(cacheKey);
     if (cached) {
       setSections(cached);
@@ -61,7 +62,7 @@ export function useAiInterpretation() {
       const response = await fetch('/api/ai-interpretation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sajuAnalysis }),
+        body: JSON.stringify({ sajuAnalysis, mode }),
         signal: controller.signal,
       });
 
