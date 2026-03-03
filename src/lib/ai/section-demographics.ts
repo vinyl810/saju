@@ -739,3 +739,41 @@ function getGraduationDemographics(a: SajuAnalysis): GraduationDemographics {
     tenGods,
   };
 }
+
+// ===== 교수 궁합 전용 demographics =====
+
+export interface ProfCompatResearchDemographics {
+  kind: 'profCompatResearch';
+  studentDayMaster: ElementBadge;
+  professorDayMaster: ElementBadge;
+  studentYongsin: ElementBadge;
+  professorYongsin: ElementBadge;
+  studentTenGods: TenGodBadge[]; // 식상/인성 계열
+}
+
+export interface ProfCompatCommDemographics {
+  kind: 'profCompatComm';
+  studentTenGods: TenGodBadge[]; // 관성/인성 계열
+  relationships: RelationshipBadge[];
+}
+
+export type ProfCompatDemographics = ProfCompatResearchDemographics | ProfCompatCommDemographics;
+
+export function getProfCompatResearchDemographics(student: SajuAnalysis, professor: SajuAnalysis): ProfCompatResearchDemographics {
+  return {
+    kind: 'profCompatResearch',
+    studentDayMaster: makeElementBadge(student.fourPillars.day.cheonganElement, '학생 일간'),
+    professorDayMaster: makeElementBadge(professor.fourPillars.day.cheonganElement, '교수 일간'),
+    studentYongsin: makeElementBadge(student.yongsin.yongsin, '학생 용신'),
+    professorYongsin: makeElementBadge(professor.yongsin.yongsin, '교수 용신'),
+    studentTenGods: findTenGods(student, ['식신', '상관', '정인', '편인']),
+  };
+}
+
+export function getProfCompatCommDemographics(student: SajuAnalysis): ProfCompatCommDemographics {
+  return {
+    kind: 'profCompatComm',
+    studentTenGods: findTenGods(student, ['편관', '정관', '편인', '정인', '식신', '상관']),
+    relationships: student.relationships.map((r: Relationship) => ({ name: r.name, type: r.type })),
+  };
+}

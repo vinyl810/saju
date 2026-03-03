@@ -10,6 +10,8 @@ import { AISectionCard } from './ai-section-card';
 import { SatisfactionSurvey } from '@/components/ui/satisfaction-survey';
 import { getAiSections, type AnalysisMode, type SectionsMap, type StreamingStatus } from '@/lib/ai/types';
 import type { SajuAnalysis } from '@/lib/saju/types';
+import { renderRichText } from '@/lib/ai/rich-text';
+import { ProfessorCompat } from './professor-compat';
 
 interface AiInterpretationProps {
   analysis: SajuAnalysis;
@@ -142,7 +144,7 @@ export function AiInterpretation({ analysis, mode = 'graduate', onSectionsChange
                 <div className="absolute top-3 left-4 font-serif text-4xl leading-none text-primary/15 select-none" aria-hidden="true">&ldquo;</div>
                 <CardContent className="relative px-10 py-6 text-center">
                   <p className="font-serif text-base leading-relaxed sm:text-lg">
-                    {sections.todayMessage.content.replace(/^오늘을 위한 한마디:\s*/, '')}
+                    {renderRichText(sections.todayMessage.content.replace(/^오늘을 위한 한마디:\s*/, ''))}
                     {sections.todayMessage.status === 'streaming' && (
                       <span className="inline-block w-0.5 h-4 ml-0.5 align-text-bottom animate-pulse bg-primary" />
                     )}
@@ -206,6 +208,9 @@ export function AiInterpretation({ analysis, mode = 'graduate', onSectionsChange
                 </div>
               </FadeIn>
               <SatisfactionSurvey type="saju" />
+              {mode === 'graduate' && (
+                <ProfessorCompat analysis={analysis} />
+              )}
             </>
           )}
         </div>

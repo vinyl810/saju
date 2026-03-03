@@ -64,6 +64,20 @@ export const COMPAT_SECTION_KEYS: AICompatSectionKey[] = AI_COMPAT_SECTIONS.map(
 
 export type CompatSectionsMap = Record<AICompatSectionKey, SectionState>;
 
+// ===== AI 교수 궁합 해석 섹션 정의 =====
+
+export const AI_PROF_COMPAT_SECTIONS = [
+  { key: 'overview', label: '종합 궁합', icon: 'Sparkles', layout: 'full' },
+  { key: 'researchStyle', label: '연구 스타일과 성장', icon: 'FlaskConical', layout: 'half' },
+  { key: 'communication', label: '소통과 갈등 관리', icon: 'MessageCircle', layout: 'half' },
+] as const;
+
+export type AIProfCompatSectionKey = (typeof AI_PROF_COMPAT_SECTIONS)[number]['key'];
+
+export const PROF_COMPAT_SECTION_KEYS: AIProfCompatSectionKey[] = AI_PROF_COMPAT_SECTIONS.map((s) => s.key);
+
+export type ProfCompatSectionsMap = Record<AIProfCompatSectionKey, SectionState>;
+
 // ===== SSE 스트리밍 이벤트 =====
 
 export interface SSEStartEvent {

@@ -21,6 +21,10 @@ export function buildCompatCacheKey(p1: SajuAnalysis, p2: SajuAnalysis): string 
   return `${CACHE_PREFIX}compat:${inputKey(p1)}|${inputKey(p2)}:${today()}:${BUILD_ID}`;
 }
 
+export function buildProfCompatCacheKey(student: SajuAnalysis, professor: SajuAnalysis): string {
+  return `${CACHE_PREFIX}profcompat:${inputKey(student)}|${inputKey(professor)}:${today()}:${BUILD_ID}`;
+}
+
 export function getCache<T>(key: string): T | null {
   try {
     const raw = localStorage.getItem(key);

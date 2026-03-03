@@ -44,11 +44,12 @@ export function performSajuAnalysis(input: BirthInput): SajuAnalysis {
   const majorFortunes = rawMajorFortunes.map(f => interpretMajorFortune(f, yongsin));
   logger.info(MOD, `대운 계산 완료`, { count: majorFortunes.length });
 
-  // 6. 세운 (현재 연도)
+  // 6. 세운 (현재 연도) — KST(UTC+9) 기준
   const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth() + 1;
-  const currentDay = now.getDate();
+  const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const currentYear = kstNow.getUTCFullYear();
+  const currentMonth = kstNow.getUTCMonth() + 1;
+  const currentDay = kstNow.getUTCDate();
 
   const rawYearlyFortune = calculateYearlyFortune(currentYear, fourPillars);
   const currentYearFortune = interpretYearlyFortune(rawYearlyFortune, yongsin);

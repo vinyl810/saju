@@ -10,6 +10,7 @@ import { AICompatSectionCard } from './ai-compat-section-card';
 import { SatisfactionSurvey } from '@/components/ui/satisfaction-survey';
 import { AI_COMPAT_SECTIONS, type SectionState } from '@/lib/ai/types';
 import type { SajuAnalysis, CompatibilityResult } from '@/lib/saju/types';
+import { renderRichText } from '@/lib/ai/rich-text';
 
 interface AiCompatibilityProps {
   person1Analysis: SajuAnalysis;
@@ -156,7 +157,7 @@ export function AiCompatibility({ person1Analysis, person2Analysis, compatResult
                 <div className="absolute top-3 left-4 font-serif text-4xl leading-none text-primary/15 select-none" aria-hidden="true">&ldquo;</div>
                 <CardContent className="relative px-10 py-6 text-center">
                   <p className="font-serif text-base leading-relaxed sm:text-lg">
-                    {sections.todayMessage.content}
+                    {renderRichText(sections.todayMessage.content)}
                     {sections.todayMessage.status === 'streaming' && (
                       <span className="inline-block w-0.5 h-4 ml-0.5 align-text-bottom animate-pulse bg-primary" />
                     )}
