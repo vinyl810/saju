@@ -501,9 +501,14 @@ export function BirthForm({ onSubmit, onChange, loading = false, title = '생년
           )}
 
           {!hideSubmit && (
-            <Button type="submit" className="w-full" size="lg" disabled={loading || degreeMissing}>
-              {loading ? '분석 중...' : birthPlaceWarningShown ? '그래도 분석하기' : '분석하기'}
-            </Button>
+            <>
+              <Button type="submit" className="w-full" size="lg" disabled={loading || degreeMissing}>
+                {loading ? '분석 중...' : birthPlaceWarningShown ? '그래도 분석하기' : '분석하기'}
+              </Button>
+              <p className="text-center text-[11px] text-muted-foreground/60">
+                입력된 생년월일은 서비스 개선을 위해 익명으로 저장되며, 개인을 식별할 수 없습니다.
+              </p>
+            </>
           )}
         </form>
       </CardContent>
