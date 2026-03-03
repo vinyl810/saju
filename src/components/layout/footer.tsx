@@ -4,7 +4,7 @@ export function Footer() {
       <div className="mx-auto max-w-5xl px-4 text-center text-sm text-muted-foreground">
         <p>사주팔자 분석은 참고용이며, 개인의 운명을 결정짓지 않습니다.</p>
         <p className="mt-2 text-xs text-muted-foreground/50">
-          Thanks to Ajang & Serinah
+          Special thanks to Ajangeunajang & Unanuna
         </p>
         <p className="mt-1">&copy; {new Date().getFullYear()} 대학원생 사주</p>
       </div>
