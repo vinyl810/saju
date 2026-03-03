@@ -1,5 +1,7 @@
 import { sql } from '@vercel/postgres';
 
+const TYPE_PREFIX = process.env.NODE_ENV === 'production' ? '' : 'test_';
+
 let tableReady = false;
 
 async function ensureTable() {
@@ -78,7 +80,7 @@ export async function logSajuSearch(
         mode, degree_program, semester
       )
       VALUES (
-        'saju', ${input.year}, ${input.month}, ${input.day}, ${input.hour}, ${input.minute},
+        ${TYPE_PREFIX + 'saju'}, ${input.year}, ${input.month}, ${input.day}, ${input.hour}, ${input.minute},
         ${input.gender}, ${input.isLunar},
         ${input.isLeapMonth}, ${input.useYajasi}, ${input.longitude ?? null}, ${input.birthPlace ?? null},
         ${opts?.mode ?? null}, ${opts?.degreeProgram ?? null}, ${opts?.semester ?? null}
@@ -99,7 +101,7 @@ export async function logCompatSearch(p1: PersonInput, p2: PersonInput) {
         year2, month2, day2, hour2, minute2, gender2, is_lunar2, birth_place2
       )
       VALUES (
-        'compatibility', ${p1.year}, ${p1.month}, ${p1.day}, ${p1.hour}, ${p1.minute},
+        ${TYPE_PREFIX + 'compatibility'}, ${p1.year}, ${p1.month}, ${p1.day}, ${p1.hour}, ${p1.minute},
         ${p1.gender}, ${p1.isLunar},
         ${p1.isLeapMonth}, ${p1.useYajasi}, ${p1.longitude ?? null}, ${p1.birthPlace ?? null},
         ${p2.year}, ${p2.month}, ${p2.day}, ${p2.hour}, ${p2.minute},
@@ -122,7 +124,7 @@ export async function logProfCompatSearch(student: PersonInput, professor: Perso
         mode
       )
       VALUES (
-        'professor-compat', ${student.year}, ${student.month}, ${student.day}, ${student.hour}, ${student.minute},
+        ${TYPE_PREFIX + 'professor-compat'}, ${student.year}, ${student.month}, ${student.day}, ${student.hour}, ${student.minute},
         ${student.gender}, ${student.isLunar},
         ${student.isLeapMonth}, ${student.useYajasi}, ${student.longitude ?? null}, ${student.birthPlace ?? null},
         ${professor.year}, ${professor.month}, ${professor.day}, ${professor.hour}, ${professor.minute},

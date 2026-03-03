@@ -1,5 +1,7 @@
 import { sql } from '@vercel/postgres';
 
+const TYPE_PREFIX = process.env.NODE_ENV === 'production' ? '' : 'test_';
+
 let tableReady = false;
 
 async function ensureTable() {
@@ -28,7 +30,7 @@ export async function saveSurveyResponse(input: {
     const metaJson = input.metadata ? JSON.stringify(input.metadata) : null;
     await sql`
       INSERT INTO survey_responses (type, rating, feedback, metadata)
-      VALUES (${input.type}, ${input.rating}, ${input.feedback ?? null}, ${metaJson}::jsonb)
+      VALUES (${TYPE_PREFIX + input.type}, ${input.rating}, ${input.feedback ?? null}, ${metaJson}::jsonb)
     `;
   } catch {
     // 설문 저장 실패해도 앱 동작에 영향 없음
