@@ -27,10 +27,25 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+  || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
 export const metadata: Metadata = {
-  title: "사주팔자 - 四柱八字",
+  metadataBase: new URL(baseUrl),
+  title: "대학원생 사주 - 四柱八字",
   description: "생년월일시로 사주팔자, 오행분석, 용신, 대운, 궁합까지 종합 분석합니다.",
   keywords: ["사주", "팔자", "사주팔자", "오행", "용신", "대운", "궁합", "만세력"],
+  openGraph: {
+    title: "대학원생 사주",
+    description: "생년월일시로 사주팔자, 오행분석, 용신, 대운, 궁합까지 종합 분석합니다.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "대학원생 사주",
+    description: "생년월일시로 사주팔자, 오행분석, 용신, 대운, 궁합까지 종합 분석합니다.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
