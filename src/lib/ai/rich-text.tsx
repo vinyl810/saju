@@ -77,9 +77,13 @@ const OUTER_RE_MONTHLY = new RegExp(`${BASE_PATTERN}|${MONTH_GANJI}`, 'g');
 // 전처리: {{금(金)}} 처럼 SAJU_TERMS에 없는 내용이 {{}}로 감싸진 경우 중괄호 제거
 // SAJU_TERMS에 있는 유효한 용어(예: {{용신}})는 보존
 function stripInvalidTermMarkup(text: string): string {
-  return text.replace(/\{\{(.+?)\}\}/g, (full, inner) => {
+  // 1) {{term}} 중 SAJU_TERMS에 없는 것 → 중괄호 제거, 유효 용어는 보존
+  let result = text.replace(/\{\{(.+?)\}\}/g, (full, inner) => {
     return SAJU_TERMS[inner] ? full : inner;
   });
+  // 2) 짝이 안 맞거나 파싱 후 남은 {{ / }} 제거
+  result = result.replace(/\{\{|\}\}/g, '');
+  return result;
 }
 
 export function renderRichText(content: string, options?: { monthlyFortune?: boolean }): React.ReactNode[] {
