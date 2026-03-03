@@ -36,8 +36,17 @@ const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: "대학원생 사주 - 四柱八字",
-  description: "생년월일시로 사주팔자, 오행분석, 용신, 대운, 궁합까지 종합 분석합니다.",
-  keywords: ["사주", "팔자", "사주팔자", "오행", "용신", "대운", "궁합", "만세력"],
+  description: "대학원생을 위한 사주풀이. 연구운, 지도교수 궁합, 졸업운까지 AI가 분석해 드립니다.",
+  keywords: ["사주", "팔자", "사주팔자", "오행", "용신", "대운", "궁합", "만세력", "대학원생"],
+  openGraph: {
+    title: "대학원생 사주",
+    description: "대학원생을 위한 사주풀이. 연구운, 지도교수 궁합, 졸업운까지 AI가 분석해 드립니다.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "대학원생 사주",
+    description: "대학원생을 위한 사주풀이. 연구운, 지도교수 궁합, 졸업운까지 AI가 분석해 드립니다.",
+  },
 };
 
 export default function RootLayout({
