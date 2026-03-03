@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { FadeIn, motion } from '@/components/ui/motion';
 
 interface SatisfactionSurveyProps {
-  type: 'saju' | 'compatibility';
+  type: 'saju' | 'compatibility' | 'professor-compat';
 }
 
 export function SatisfactionSurvey({ type }: SatisfactionSurveyProps) {
@@ -58,7 +58,7 @@ export function SatisfactionSurvey({ type }: SatisfactionSurveyProps) {
       <Card className="border-primary/10">
         <CardContent className="flex flex-col items-center gap-4 py-5">
           <p className="text-sm font-medium">
-            {type === 'saju' ? '사주' : '궁합'} 결과가 마음에 드시나요?
+            {type === 'saju' ? '사주' : type === 'professor-compat' ? '교수님 궁합' : '궁합'} 결과가 마음에 드시나요?
           </p>
 
           {/* Star rating */}

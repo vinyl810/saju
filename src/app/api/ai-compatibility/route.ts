@@ -47,13 +47,25 @@ export async function POST(request: NextRequest) {
   const systemPrompt = buildCompatSystemPrompt();
   const userPrompt = buildCompatUserPrompt(compressed);
 
-  logger.info(MODULE, 'AI 궁합 해석 스트리밍 시작', { model });
+  const p1Birth = person1Analysis.birthInput;
+  const p2Birth = person2Analysis.birthInput;
+  logger.info(MODULE, 'AI 궁합 해석 스트리밍 시작', {
+    model,
+    person1: `${p1Birth.year}-${p1Birth.month}-${p1Birth.day} ${p1Birth.hour}:${p1Birth.minute}`,
+    person1Gender: p1Birth.gender,
+    person2: `${p2Birth.year}-${p2Birth.month}-${p2Birth.day} ${p2Birth.hour}:${p2Birth.minute}`,
+    person2Gender: p2Birth.gender,
+    totalScore: compatResult.totalScore,
+    systemPromptLen: systemPrompt.length,
+    userPromptLen: userPrompt.length,
+  });
 
   const sectionLabels = Object.fromEntries(
     AI_COMPAT_SECTIONS.map((s) => [s.key, s.label]),
   ) as Record<AICompatSectionKey, string>;
 
   const encoder = new TextEncoder();
+  const startTime = Date.now();
 
   const readable = new ReadableStream({
     async start(controller) {
@@ -69,6 +81,8 @@ export async function POST(request: NextRequest) {
         let textBuffer = '';
         let chunkCount = 0;
         const emittedSections: AICompatSectionKey[] = [];
+        const sectionLengths: Record<string, number> = {};
+        let totalContentLength = 0;
 
         for await (const chunk of parseGeminiStream(geminiStream)) {
           chunkCount++;
@@ -82,10 +96,11 @@ export async function POST(request: NextRequest) {
             const markerIndex = markerMatch.index!;
             const sectionKey = markerMatch[1] as AICompatSectionKey;
 
-            // Emit any content before this marker for the current section
             if (currentSection && markerIndex > 0) {
               const content = textBuffer.slice(0, markerIndex).trim();
               if (content) {
+                sectionLengths[currentSection] = (sectionLengths[currentSection] || 0) + content.length;
+                totalContentLength += content.length;
                 controller.enqueue(
                   encoder.encode(sseEncode({ section: currentSection, status: 'delta', content })),
                 );
@@ -95,28 +110,25 @@ export async function POST(request: NextRequest) {
               );
             }
 
-            // Start new section
             currentSection = sectionKey;
             emittedSections.push(sectionKey);
-            logger.info(MODULE, `섹션 시작: ${sectionKey}`);
             controller.enqueue(
               encoder.encode(
                 sseEncode({ section: sectionKey, status: 'start', label: sectionLabels[sectionKey] || sectionKey }),
               ),
             );
 
-            // Remove processed part from buffer
             textBuffer = textBuffer.slice(markerIndex + markerMatch[0].length);
           }
 
-          // Emit remaining buffer content as delta for current section
           if (currentSection && textBuffer.length > 0) {
-            // Keep a small buffer to avoid splitting markers (longest: ---SECTION:personality--- = 26 chars)
-            const safeLength = textBuffer.length - 30;
+            const safeLength = textBuffer.length - 40;
             if (safeLength > 0) {
               const content = textBuffer.slice(0, safeLength);
               textBuffer = textBuffer.slice(safeLength);
               if (content) {
+                sectionLengths[currentSection] = (sectionLengths[currentSection] || 0) + content.length;
+                totalContentLength += content.length;
                 controller.enqueue(
                   encoder.encode(sseEncode({ section: currentSection, status: 'delta', content })),
                 );
@@ -125,28 +137,35 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Flush remaining content
         if (currentSection && textBuffer.trim()) {
+          const content = textBuffer.trim();
+          sectionLengths[currentSection] = (sectionLengths[currentSection] || 0) + content.length;
+          totalContentLength += content.length;
           controller.enqueue(
-            encoder.encode(sseEncode({ section: currentSection, status: 'delta', content: textBuffer.trim() })),
+            encoder.encode(sseEncode({ section: currentSection, status: 'delta', content })),
           );
           controller.enqueue(
             encoder.encode(sseEncode({ section: currentSection, status: 'done' })),
           );
         }
 
+        const durationMs = Date.now() - startTime;
         logger.info(MODULE, 'AI 궁합 해석 스트리밍 완료', {
+          durationMs,
+          durationSec: (durationMs / 1000).toFixed(1),
           chunkCount,
-          emittedSections,
           totalSections: emittedSections.length,
+          emittedSections,
+          totalContentLength,
+          sectionLengths,
         });
 
-        // Signal completion
         controller.enqueue(encoder.encode(sseEncode({ status: 'complete' })));
         controller.close();
       } catch (err) {
+        const durationMs = Date.now() - startTime;
         const message = err instanceof Error ? err.message : 'AI 궁합 해석 중 오류가 발생했습니다.';
-        logger.error(MODULE, 'AI 궁합 해석 스트리밍 오류', { error: message });
+        logger.error(MODULE, 'AI 궁합 해석 스트리밍 오류', { error: message, durationMs });
         controller.enqueue(
           encoder.encode(sseEncode({ status: 'error', message })),
         );

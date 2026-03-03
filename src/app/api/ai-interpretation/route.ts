@@ -47,7 +47,18 @@ export async function POST(request: NextRequest) {
   const systemPrompt = buildSystemPrompt(mode);
   const userPrompt = buildUserPrompt(compressed, mode);
 
-  logger.info(MODULE, 'AI 해석 스트리밍 시작', { model, mode });
+  const birthInfo = sajuAnalysis.birthInput;
+  logger.info(MODULE, 'AI 해석 스트리밍 시작', {
+    model,
+    mode,
+    birth: `${birthInfo.year}-${birthInfo.month}-${birthInfo.day} ${birthInfo.hour}:${birthInfo.minute}`,
+    gender: birthInfo.gender,
+    lunar: birthInfo.isLunar,
+    degree: birthInfo.degreeProgram || null,
+    semester: birthInfo.semester || null,
+    systemPromptLen: systemPrompt.length,
+    userPromptLen: userPrompt.length,
+  });
 
   const sections = getAiSections(mode);
   const sectionLabels = Object.fromEntries(
@@ -55,6 +66,7 @@ export async function POST(request: NextRequest) {
   ) as Record<AISectionKey, string>;
 
   const encoder = new TextEncoder();
+  const startTime = Date.now();
 
   const readable = new ReadableStream({
     async start(controller) {
@@ -71,6 +83,8 @@ export async function POST(request: NextRequest) {
         let textBuffer = '';
         let chunkCount = 0;
         const emittedSections: AISectionKey[] = [];
+        const sectionLengths: Record<string, number> = {};
+        let totalContentLength = 0;
 
         for await (const chunk of parseGeminiStream(geminiStream)) {
           chunkCount++;
@@ -88,6 +102,8 @@ export async function POST(request: NextRequest) {
             if (currentSection && markerIndex > 0) {
               const content = textBuffer.slice(0, markerIndex).trim();
               if (content) {
+                sectionLengths[currentSection] = (sectionLengths[currentSection] || 0) + content.length;
+                totalContentLength += content.length;
                 controller.enqueue(
                   encoder.encode(sseEncode({ section: currentSection, status: 'delta', content })),
                 );
@@ -100,7 +116,6 @@ export async function POST(request: NextRequest) {
             // Start new section
             currentSection = sectionKey;
             emittedSections.push(sectionKey);
-            logger.info(MODULE, `섹션 시작: ${sectionKey}`);
             controller.enqueue(
               encoder.encode(
                 sseEncode({ section: sectionKey, status: 'start', label: sectionLabels[sectionKey] || sectionKey }),
@@ -119,6 +134,8 @@ export async function POST(request: NextRequest) {
               const content = textBuffer.slice(0, safeLength);
               textBuffer = textBuffer.slice(safeLength);
               if (content) {
+                sectionLengths[currentSection] = (sectionLengths[currentSection] || 0) + content.length;
+                totalContentLength += content.length;
                 controller.enqueue(
                   encoder.encode(sseEncode({ section: currentSection, status: 'delta', content })),
                 );
@@ -129,26 +146,35 @@ export async function POST(request: NextRequest) {
 
         // Flush remaining content
         if (currentSection && textBuffer.trim()) {
+          const content = textBuffer.trim();
+          sectionLengths[currentSection] = (sectionLengths[currentSection] || 0) + content.length;
+          totalContentLength += content.length;
           controller.enqueue(
-            encoder.encode(sseEncode({ section: currentSection, status: 'delta', content: textBuffer.trim() })),
+            encoder.encode(sseEncode({ section: currentSection, status: 'delta', content })),
           );
           controller.enqueue(
             encoder.encode(sseEncode({ section: currentSection, status: 'done' })),
           );
         }
 
+        const durationMs = Date.now() - startTime;
         logger.info(MODULE, 'AI 해석 스트리밍 완료', {
+          durationMs,
+          durationSec: (durationMs / 1000).toFixed(1),
           chunkCount,
-          emittedSections,
           totalSections: emittedSections.length,
+          emittedSections,
+          totalContentLength,
+          sectionLengths,
         });
 
         // Signal completion
         controller.enqueue(encoder.encode(sseEncode({ status: 'complete' })));
         controller.close();
       } catch (err) {
+        const durationMs = Date.now() - startTime;
         const message = err instanceof Error ? err.message : 'AI 해석 중 오류가 발생했습니다.';
-        logger.error(MODULE, 'AI 해석 스트리밍 오류', { error: message });
+        logger.error(MODULE, 'AI 해석 스트리밍 오류', { error: message, durationMs });
         controller.enqueue(
           encoder.encode(sseEncode({ status: 'error', message })),
         );

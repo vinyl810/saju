@@ -18,6 +18,10 @@ const BirthInputSchema = z.object({
   useYajasi: z.boolean(),
   birthPlace: z.string().optional(),
   longitude: z.number().optional(),
+  utcOffset: z.number().optional(),
+  degreeProgram: z.enum(['석사', '박사', '석박통합']).optional(),
+  semester: z.number().int().min(1).max(16).optional(),
+  mode: z.enum(['graduate', 'general']).optional(),
 });
 
 export async function POST(request: Request) {
@@ -40,7 +44,12 @@ export async function POST(request: Request) {
     const result = performSajuAnalysis(parsed.data);
     logger.info(MOD, `사주 분석 완료, 응답 전송`);
 
-    await logSajuSearch(parsed.data);
+    const mode = parsed.data.degreeProgram ? 'graduate' : 'general';
+    await logSajuSearch(parsed.data, {
+      mode,
+      degreeProgram: parsed.data.degreeProgram,
+      semester: parsed.data.semester,
+    });
 
     return NextResponse.json(result);
   } catch (error) {

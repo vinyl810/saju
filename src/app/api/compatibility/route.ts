@@ -18,6 +18,9 @@ const PersonSchema = z.object({
   useYajasi: z.boolean(),
   birthPlace: z.string().optional(),
   longitude: z.number().optional(),
+  utcOffset: z.number().optional(),
+  degreeProgram: z.enum(['석사', '박사', '석박통합']).optional(),
+  semester: z.number().int().min(1).max(16).optional(),
 });
 
 const CompatibilityInputSchema = z.object({

@@ -45,11 +45,14 @@ export function useAiCompatibility() {
     const cacheKey = buildCompatCacheKey(person1Analysis, person2Analysis);
     const cached = getCache<CompatSectionsMap>(cacheKey);
     if (cached) {
+      const cachedKeys = Object.keys(cached).filter((k) => cached[k as AICompatSectionKey]?.content);
+      console.log(`[ai-compatibility] 캐시 HIT sections=${cachedKeys.length}`, cacheKey);
       setSections(cached);
       setError(null);
       setStatus('done');
       return;
     }
+    console.log(`[ai-compatibility] 캐시 MISS, API 호출`, cacheKey);
 
     // Abort any ongoing request
     abortRef.current?.abort();
@@ -137,6 +140,11 @@ export function useAiCompatibility() {
             } else if (event.status === 'complete') {
               setStatus('done');
               setSections((final) => {
+                const contentLens = Object.entries(final).reduce((acc, [k, v]) => {
+                  if (v.content) acc[k] = v.content.length;
+                  return acc;
+                }, {} as Record<string, number>);
+                console.log(`[ai-compatibility] 스트리밍 완료, 캐시 저장`, contentLens);
                 setCache(cacheKey, final);
                 return final;
               });

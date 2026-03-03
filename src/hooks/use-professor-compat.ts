@@ -44,11 +44,14 @@ export function useProfessorCompat() {
     const cacheKey = buildProfCompatCacheKey(studentAnalysis, professorAnalysis);
     const cached = getCache<ProfCompatSectionsMap>(cacheKey);
     if (cached) {
+      const cachedKeys = Object.keys(cached).filter((k) => cached[k as AIProfCompatSectionKey]?.content);
+      console.log(`[prof-compat] 캐시 HIT sections=${cachedKeys.length}`, cacheKey);
       setSections(cached);
       setError(null);
       setStatus('done');
       return;
     }
+    console.log(`[prof-compat] 캐시 MISS, API 호출`, cacheKey);
 
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -133,6 +136,11 @@ export function useProfessorCompat() {
             } else if (event.status === 'complete') {
               setStatus('done');
               setSections((final) => {
+                const contentLens = Object.entries(final).reduce((acc, [k, v]) => {
+                  if (v.content) acc[k] = v.content.length;
+                  return acc;
+                }, {} as Record<string, number>);
+                console.log(`[prof-compat] 스트리밍 완료, 캐시 저장`, contentLens);
                 setCache(cacheKey, final);
                 return final;
               });

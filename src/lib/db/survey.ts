@@ -17,7 +17,7 @@ async function ensureTable() {
 }
 
 export async function saveSurveyResponse(input: {
-  type: 'saju' | 'compatibility';
+  type: 'saju' | 'compatibility' | 'professor-compat';
   rating: number;
   feedback?: string;
 }) {

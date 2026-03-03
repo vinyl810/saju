@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FadeIn } from '@/components/ui/motion';
 import { BirthForm } from './birth-form';
+import { SatisfactionSurvey } from '@/components/ui/satisfaction-survey';
 import { useSajuCalculation } from '@/hooks/use-saju-calculation';
 import { useProfessorCompat } from '@/hooks/use-professor-compat';
 import { AI_PROF_COMPAT_SECTIONS, type AIProfCompatSectionKey, type SectionState } from '@/lib/ai/types';
@@ -411,12 +412,15 @@ export function ProfessorCompat({ analysis }: ProfessorCompatProps) {
         </div>
 
         {phase === 'done' && (
-          <FadeIn>
-            <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
-              <GraduationCap className="h-4 w-4 text-green-500" />
-              교수님 궁합 분석 완료
-            </div>
-          </FadeIn>
+          <>
+            <FadeIn>
+              <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+                <GraduationCap className="h-4 w-4 text-green-500" />
+                교수님 궁합 분석 완료
+              </div>
+            </FadeIn>
+            <SatisfactionSurvey type="professor-compat" />
+          </>
         )}
       </div>
     </FadeIn>
