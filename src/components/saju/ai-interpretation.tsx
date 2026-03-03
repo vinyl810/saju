@@ -207,7 +207,18 @@ export function AiInterpretation({ analysis, mode = 'graduate', onSectionsChange
                   AI 분석 완료
                 </div>
               </FadeIn>
-              <SatisfactionSurvey type="saju" />
+              <SatisfactionSurvey type="saju" metadata={{
+                mode,
+                birth: `${analysis.birthInput.year}-${analysis.birthInput.month}-${analysis.birthInput.day} ${analysis.birthInput.hour}:${analysis.birthInput.minute}`,
+                gender: analysis.birthInput.gender,
+                dayMaster: analysis.fourPillars.day.ganJi.cheongan,
+                strength: analysis.yongsin.dayMasterStrength,
+                yongsin: analysis.yongsin.yongsin,
+                ohaeng: analysis.fiveElements.percentages,
+                yearScore: analysis.currentYearFortune.score,
+                degreeProgram: analysis.birthInput.degreeProgram || null,
+                semester: analysis.birthInput.semester || null,
+              }} />
               {mode === 'graduate' && (
                 <ProfessorCompat analysis={analysis} />
               )}

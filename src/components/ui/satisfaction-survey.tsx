@@ -8,9 +8,10 @@ import { FadeIn, motion } from '@/components/ui/motion';
 
 interface SatisfactionSurveyProps {
   type: 'saju' | 'compatibility' | 'professor-compat';
+  metadata?: Record<string, unknown>;
 }
 
-export function SatisfactionSurvey({ type }: SatisfactionSurveyProps) {
+export function SatisfactionSurvey({ type, metadata }: SatisfactionSurveyProps) {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [feedback, setFeedback] = useState('');
@@ -31,6 +32,7 @@ export function SatisfactionSurvey({ type }: SatisfactionSurveyProps) {
           type,
           rating,
           feedback: feedback || undefined,
+          metadata,
         }),
       });
     } catch {

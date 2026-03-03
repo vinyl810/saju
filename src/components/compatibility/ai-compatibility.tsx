@@ -224,7 +224,12 @@ export function AiCompatibility({ person1Analysis, person2Analysis, compatResult
                   AI 궁합 분석 완료
                 </div>
               </FadeIn>
-              <SatisfactionSurvey type="compatibility" />
+              <SatisfactionSurvey type="compatibility" metadata={{
+                person1: `${person1Analysis.birthInput.year}-${person1Analysis.birthInput.month}-${person1Analysis.birthInput.day} ${person1Analysis.birthInput.hour}:${person1Analysis.birthInput.minute} ${person1Analysis.birthInput.gender}`,
+                person2: `${person2Analysis.birthInput.year}-${person2Analysis.birthInput.month}-${person2Analysis.birthInput.day} ${person2Analysis.birthInput.hour}:${person2Analysis.birthInput.minute} ${person2Analysis.birthInput.gender}`,
+                totalScore: compatResult.totalScore,
+                grade: compatResult.grade,
+              }} />
             </>
           )}
         </div>

@@ -419,7 +419,12 @@ export function ProfessorCompat({ analysis }: ProfessorCompatProps) {
                 교수님 궁합 분석 완료
               </div>
             </FadeIn>
-            <SatisfactionSurvey type="professor-compat" />
+            <SatisfactionSurvey type="professor-compat" metadata={{
+              student: `${analysis.birthInput.year}-${analysis.birthInput.month}-${analysis.birthInput.day} ${analysis.birthInput.hour}:${analysis.birthInput.minute} ${analysis.birthInput.gender}`,
+              professor: profAnalysisState ? `${profAnalysisState.birthInput.year}-${profAnalysisState.birthInput.month}-${profAnalysisState.birthInput.day} ${profAnalysisState.birthInput.hour}:${profAnalysisState.birthInput.minute} ${profAnalysisState.birthInput.gender}` : null,
+              studentDayMaster: analysis.fourPillars.day.ganJi.cheongan,
+              professorDayMaster: profAnalysisState?.fourPillars.day.ganJi.cheongan || null,
+            }} />
           </>
         )}
       </div>

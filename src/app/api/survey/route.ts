@@ -6,6 +6,7 @@ const SurveySchema = z.object({
   type: z.enum(['saju', 'compatibility', 'professor-compat']),
   rating: z.number().int().min(1).max(5),
   feedback: z.string().max(1000).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function POST(request: Request) {
