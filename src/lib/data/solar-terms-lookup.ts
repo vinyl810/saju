@@ -132,8 +132,8 @@ const D = 0.2422;
 /**
  * Century-specific C values for all 24 solar terms.
  *
- * Row 0 = 20th century (1900-2000)
- * Row 1 = 21st century (2001-2100)
+ * Row 0 = 20th century (1900-1999)
+ * Row 1 = 21st century (2000-2099)
  *
  * Column order follows the 24-term index:
  *   0=소한  1=대한  2=입춘  3=우수  4=경칩  5=춘분
@@ -163,8 +163,9 @@ const CENTURY_C: readonly [readonly number[], readonly number[]] = [
  * Key = 24-term index, Value = array of years needing +1 correction.
  */
 const INCREASE_OFFSET: Record<number, number[]> = {
-  0:  [1982],         // 소한
+  0:  [1982, 2024],   // 소한
   1:  [2082],         // 대한
+  2:  [1960, 1980],   // 입춘
   5:  [2084],         // 춘분
   9:  [2008],         // 소만
   10: [1902],         // 망종
@@ -210,9 +211,8 @@ function computeTermDay(year: number, termIndex24: number): number {
     );
   }
 
-  // Determine century index: 0 for 20th century, 1 for 21st century
-  // Year 2000 is treated as 20th century (Y=100%100=0 with 20th-century C values)
-  const centuryIndex = year <= 2000 ? 0 : 1;
+  // Determine century index: 0 for 20th century (1900-1999), 1 for 21st century (2000-2099)
+  const centuryIndex = year < 2000 ? 0 : 1;
   const C = CENTURY_C[centuryIndex][termIndex24];
 
   let Y = year % 100;
