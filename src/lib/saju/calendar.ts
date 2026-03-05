@@ -79,10 +79,14 @@ export function daysBetween(date1: Date, date2: Date): number {
 }
 
 /**
- * 기준일(1900-01-01 = 갑자일)로부터의 일수 계산
+ * 기준일(1899-12-22 = 갑자일)로부터의 일수 계산
+ *
+ * 60간지 주기에서 甲子日에 해당하는 양력 날짜는 1899-12-22이다.
+ * (1900-01-01은 甲戌日(인덱스 10)이므로 에포크로 사용하면 안 됨)
+ * JDN 검증: JDN(1899-12-22) = 2415011, (2415011+49)%60 = 0 = 甲子
  */
 export function daysSinceEpoch(year: number, month: number, day: number): number {
-  const epoch = new Date(1900, 0, 1); // 1900-01-01
+  const epoch = new Date(1899, 11, 22); // 1899-12-22 = 甲子日
   const target = new Date(year, month - 1, day);
   const msPerDay = 24 * 60 * 60 * 1000;
   const result = Math.round((target.getTime() - epoch.getTime()) / msPerDay);
